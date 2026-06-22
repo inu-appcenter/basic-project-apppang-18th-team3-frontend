@@ -58,6 +58,8 @@ export default tseslint.config(
       'no-undef': 'off',
       'no-redeclare': 'off',
       'no-dupe-class-members': 'off',
+      'import/extensions': 'off',
+      'react/require-default-props': 'off',
       'import/named': 'off',
       'import/no-named-as-default-member': 'off',
       'import/no-unresolved': 'off',
