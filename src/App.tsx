@@ -1,3 +1,5 @@
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 import AuthLayout from '@/layouts/AuthLayout';
@@ -37,6 +39,8 @@ function App() {
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      <Analytics />
+      <SpeedInsights />
     </BrowserRouter>
   );
 }
