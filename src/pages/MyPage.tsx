@@ -1,12 +1,13 @@
 import {
   ChevronRight,
-  ClipboardList,
   Heart,
-  History,
   LayoutGrid,
+  PackagePlus,
+  ReceiptText,
   RefreshCcw,
   Settings,
-  ShoppingCart,
+  ShoppingBag,
+  Star,
   User,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -17,12 +18,18 @@ type OrderStatus = '배송완료' | '배송중' | '주문접수';
 
 type Order = {
   id: number;
-  productName: string;
+  status: OrderStatus;
+  hasRocket: boolean;
+};
+
+type RelatedProduct = {
+  id: number;
   price: number;
   originalPrice?: number;
   discountRate?: number;
-  status: OrderStatus;
-  imageBg: string;
+  rating: number;
+  reviewCount: number;
+  hasRocket: boolean;
 };
 
 type QuickMenu = {
@@ -33,51 +40,64 @@ type QuickMenu = {
 
 // ─── Constants ────────────────────────────────────────────
 const IS_LOGGED_IN = true;
-const USER_NAME = '임재현';
+const USER_NAME = '홍길동';
 
 const ORDERS: Order[] = [
-  {
-    id: 1,
-    productName: 'Apple 2024 아이패드 에어 11(M2 모델)',
-    price: 917490,
-    originalPrice: 949000,
-    discountRate: 3,
-    status: '배송완료',
-    imageBg: 'bg-gray-200',
-  },
+  { id: 1, status: '배송완료', hasRocket: true },
+  { id: 2, status: '배송중', hasRocket: false },
+  { id: 3, status: '주문접수', hasRocket: true },
+  { id: 4, status: '배송완료', hasRocket: true },
+];
+
+const RELATED_PRODUCTS: RelatedProduct[] = [
+  { id: 1, price: 58380, rating: 4.8, reviewCount: 31387, hasRocket: true },
   {
     id: 2,
-    productName: '허글리 8IN1 딥 클린 초 고농축 캡슐 세탁세제 코튼캔디 향, 100개입',
-    price: 3300,
-    originalPrice: 6600,
-    discountRate: 50,
-    status: '배송중',
-    imageBg: 'bg-secondary-100',
+    price: 58380,
+    originalPrice: 70000,
+    discountRate: 17,
+    rating: 4.5,
+    reviewCount: 12345,
+    hasRocket: true,
   },
-  {
-    id: 3,
-    productName: 'Samsung Galaxy S25 Ultra 512GB',
-    price: 1200000,
-    status: '주문접수',
-    imageBg: 'bg-primary-100',
-  },
+  { id: 3, price: 58380, rating: 4.8, reviewCount: 31387, hasRocket: false },
   {
     id: 4,
-    productName: '나이키 에어포스 1 07 화이트',
-    price: 119000,
-    originalPrice: 139000,
-    discountRate: 14,
-    status: '배송완료',
-    imageBg: 'bg-gray-100',
+    price: 58380,
+    originalPrice: 70000,
+    discountRate: 17,
+    rating: 4.5,
+    reviewCount: 12345,
+    hasRocket: false,
+  },
+  { id: 5, price: 58380, rating: 4.8, reviewCount: 31387, hasRocket: true },
+  {
+    id: 6,
+    price: 58380,
+    originalPrice: 70000,
+    discountRate: 17,
+    rating: 4.5,
+    reviewCount: 12345,
+    hasRocket: true,
+  },
+  { id: 7, price: 58380, rating: 4.8, reviewCount: 31387, hasRocket: false },
+  {
+    id: 8,
+    price: 58380,
+    originalPrice: 70000,
+    discountRate: 17,
+    rating: 4.5,
+    reviewCount: 12345,
+    hasRocket: false,
   },
 ];
 
 const QUICK_MENUS: QuickMenu[] = [
-  { label: '주문내역', path: '/mypage/orders', icon: <ClipboardList size={28} /> },
-  { label: '찜리스트', path: '/mypage/wishlist', icon: <Heart size={28} /> },
-  { label: '최근본상품', path: '/mypage/recent', icon: <History size={28} /> },
-  { label: '자주산상품', path: '/mypage/frequent', icon: <RefreshCcw size={28} /> },
-  { label: '전체메뉴', path: '/mypage/menu', icon: <LayoutGrid size={28} /> },
+  { label: '주문내역', path: '/mypage/orders', icon: <ReceiptText size={24} /> },
+  { label: '찜리스트', path: '/mypage/wishlist', icon: <Heart size={24} /> },
+  { label: '최근본상품', path: '/mypage/recent', icon: <ShoppingBag size={24} /> },
+  { label: '자주산상품', path: '/mypage/frequent', icon: <RefreshCcw size={24} /> },
+  { label: '전체메뉴', path: '/mypage/menu', icon: <LayoutGrid size={24} /> },
 ];
 
 const STATUS_COLOR: Record<OrderStatus, string> = {
@@ -89,60 +109,70 @@ const STATUS_COLOR: Record<OrderStatus, string> = {
 // ─── Utils ────────────────────────────────────────────────
 function maskName(name: string): string {
   if (name.length <= 1) return name;
-  if (name.length === 2) return name[0] + '*';
-  return name[0] + '*'.repeat(name.length - 2) + name[name.length - 1];
+  if (name.length === 2) return `${name[0]}*`;
+  return `${name[0]}${'*'.repeat(name.length - 2)}${name[name.length - 1]}`;
 }
 
 // ─── Sub-components ───────────────────────────────────────
-function ProfileAvatar({ name }: { name: string }) {
+function StarRow({ rating, reviewCount }: { rating: number; reviewCount: number }) {
   return (
-    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary-100">
-      <span className="text-title-5 font-bold text-primary-200">{name.charAt(0)}</span>
+    <div className="flex items-end gap-0.5">
+      <div className="flex items-center">
+        {Array.from({ length: 5 }, (_, i) => (
+          <Star
+            key={i}
+            size={10}
+            className={
+              i < Math.round(rating)
+                ? 'fill-yellow-300 text-yellow-300'
+                : 'fill-gray-200 text-gray-200'
+            }
+          />
+        ))}
+      </div>
+      <span className="text-[10px] leading-none text-gray-300">
+        ({reviewCount.toLocaleString()})
+      </span>
     </div>
   );
 }
 
-function OrderCard({
-  order,
-  onAddToCart,
-}: {
-  order: Order;
-  onAddToCart: (id: number) => void;
-}) {
+function OrderCard({ order }: { order: Order }) {
   return (
-    <div className="flex w-36 shrink-0 flex-col overflow-hidden rounded-xl border border-gray-200">
-      <div className={`h-28 w-full ${order.imageBg}`} />
+    <div className="flex h-[154px] w-[124px] shrink-0 flex-col gap-1 rounded-lg border border-gray-200 bg-white p-2">
+      {order.hasRocket && (
+        <span className="text-body-9 text-secondary-300 font-semibold">로켓</span>
+      )}
+      <span className={`text-body-10 ${STATUS_COLOR[order.status]}`}>{order.status}</span>
+      <div className="relative mt-auto">
+        <div className="h-25 w-25 bg-gray-200" />
+        <div className="absolute right-0 bottom-0 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-md">
+          <PackagePlus size={14} className="text-gray-300" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      <div className="flex flex-1 flex-col gap-1.5 p-2">
-        <span className={`text-body-9 font-semibold ${STATUS_COLOR[order.status]}`}>
-          {order.status}
-        </span>
-
-        <p className="text-body-10 line-clamp-2 text-black">{order.productName}</p>
-
-        <div className="flex flex-col gap-0.5">
-          {order.originalPrice && order.discountRate && (
-            <div className="flex items-center gap-1">
-              <span className="text-body-11 font-semibold text-red-300">{order.discountRate}%</span>
-              <span className="text-body-11 text-gray-300 line-through">
-                {order.originalPrice.toLocaleString()}원
-              </span>
-            </div>
-          )}
-          <span className="text-body-9 font-bold text-black">
-            {order.price.toLocaleString()}원
+function RelatedProductCard({ product }: { product: RelatedProduct }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="h-25 w-25 bg-gray-200" />
+      {product.originalPrice && product.discountRate && (
+        <div className="flex items-center gap-1">
+          <span className="text-body-11 font-semibold text-red-300">{product.discountRate}%</span>
+          <span className="text-body-11 text-gray-300 line-through">
+            {product.originalPrice.toLocaleString()}원
           </span>
         </div>
-
-        <button
-          type="button"
-          onClick={() => onAddToCart(order.id)}
-          className="mt-auto flex w-full items-center justify-center gap-1 rounded border border-gray-200 py-1.5 transition-colors hover:bg-gray-100"
-        >
-          <ShoppingCart size={12} className="text-gray-300" />
-          <span className="text-body-11 text-gray-300">장바구니 담기</span>
-        </button>
-      </div>
+      )}
+      <span className="text-body-9 font-bold text-black">{product.price.toLocaleString()}원</span>
+      {product.hasRocket ? (
+        <span className="text-body-11 text-secondary-300 font-semibold">로켓 · 내일도착</span>
+      ) : (
+        <span className="text-body-11 text-black">무료배송</span>
+      )}
+      <StarRow rating={product.rating} reviewCount={product.reviewCount} />
     </div>
   );
 }
@@ -151,54 +181,60 @@ function OrderCard({
 function MyPage() {
   const navigate = useNavigate();
 
-  const handleAddToCart = (_id: number) => {
-    // POST /api/cart
-  };
-
   return (
-    <div className="flex flex-col pb-4">
-      {/* 프로필 섹션 */}
-      <div className="flex items-center justify-between border-b border-gray-200 px-4 py-5">
+    <div className="flex flex-col bg-gray-100 pb-4">
+      {/* 프로필 헤더 — Primary-100 배경 */}
+      <div className="bg-primary-100 flex flex-col gap-2.5 px-3 py-3">
         {IS_LOGGED_IN ? (
           <>
-            <div className="flex items-center gap-3">
-              <ProfileAvatar name={USER_NAME} />
-              <div className="flex flex-col gap-1">
-                <span className="text-body-5 font-semibold text-black">
-                  {maskName(USER_NAME)}님
-                </span>
-                <span className="text-body-9 text-gray-300">반갑습니다!</span>
+            {/* 프로필 행 */}
+            <div className="flex items-center justify-between py-2">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-end justify-center overflow-hidden rounded-full bg-gray-200 ring-1 ring-white">
+                  <User size={24} className="text-gray-100" />
+                </div>
+                <span className="text-xl font-bold text-black">{maskName(USER_NAME)}</span>
+              </div>
+              <button type="button" onClick={() => navigate('/settings')} aria-label="계정 설정">
+                <Settings size={24} className="text-black" />
+              </button>
+            </div>
+
+            {/* 캐시/머니 카드 */}
+            <div className="rounded-xl bg-white px-3 py-3">
+              <div className="flex justify-between px-[60px]">
+                <div>
+                  <span className="text-xs text-gray-300">쿠팡 캐시 </span>
+                  <span className="text-sm font-bold text-black">0 원</span>
+                </div>
+                <div>
+                  <span className="text-xs text-gray-300">쿠페이 머니 </span>
+                  <span className="text-sm font-bold text-black">12,345 원</span>
+                </div>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => navigate('/mypage/settings')}
-              aria-label="계정 설정"
-              className="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100"
-            >
-              <Settings size={20} className="text-gray-300" />
-            </button>
           </>
         ) : (
-          <div className="flex w-full items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gray-100">
-                <User size={28} className="text-gray-200" />
+          /* 비로그인 상태 */
+          <div className="flex items-center justify-between py-2">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-end justify-center overflow-hidden rounded-full bg-gray-200 ring-1 ring-white">
+                <User size={24} className="text-gray-100" />
               </div>
-              <span className="text-body-5 font-semibold text-black">로그인이 필요해요</span>
+              <span className="text-body-7 font-medium text-black">로그인이 필요해요</span>
             </div>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => navigate('/login')}
-                className="text-body-9 rounded border border-primary-200 px-3 py-1.5 font-semibold text-primary-200 transition-colors hover:bg-primary-100"
+                className="border-primary-200 text-primary-200 text-body-10 rounded border px-3 py-1.5 font-semibold"
               >
                 로그인
               </button>
               <button
                 type="button"
                 onClick={() => navigate('/register')}
-                className="text-body-9 rounded bg-primary-200 px-3 py-1.5 font-semibold text-white transition-opacity hover:opacity-90"
+                className="bg-primary-200 text-body-10 rounded px-3 py-1.5 font-semibold text-white"
               >
                 회원가입
               </button>
@@ -207,43 +243,72 @@ function MyPage() {
         )}
       </div>
 
-      {/* 퀵 메뉴 */}
-      <div className="border-b border-gray-200 px-2 py-4">
-        <div className="grid grid-cols-5">
-          {QUICK_MENUS.map((menu) => (
-            <button
-              key={menu.path}
-              type="button"
-              onClick={() => navigate(menu.path)}
-              className="flex flex-col items-center gap-1.5 py-2 text-black transition-colors hover:text-primary-200"
-            >
-              {menu.icon}
-              <span className="text-body-11 break-keep text-center leading-tight">
-                {menu.label}
-              </span>
-            </button>
+      {/* 퀵 메뉴 — White */}
+      <div className="flex justify-between bg-white px-6 py-3">
+        {QUICK_MENUS.map((menu) => (
+          <button
+            key={menu.path}
+            type="button"
+            onClick={() => navigate(menu.path)}
+            className="flex w-[60px] flex-col items-center gap-2 text-black"
+          >
+            {menu.icon}
+            <span className="text-body-10 text-center leading-tight break-keep">{menu.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* 8px 구분 */}
+      <div className="h-2 bg-gray-100" />
+
+      {/* 주문 내역 — White 카드 */}
+      <div className="flex flex-col gap-4 bg-white px-3 py-3">
+        <div className="flex items-center justify-between">
+          <span className="text-body-1 text-black">주문 내역</span>
+          <button
+            type="button"
+            onClick={() => navigate('/mypage/orders')}
+            className="flex items-center gap-1"
+          >
+            <span className="text-body-9 text-primary-200 font-semibold">전체 보기</span>
+            <ChevronRight size={12} className="text-primary-200" />
+          </button>
+        </div>
+        <div className="scrollbar-hide flex gap-2.5 overflow-x-auto">
+          {ORDERS.map((order) => (
+            <OrderCard key={order.id} order={order} />
           ))}
         </div>
       </div>
 
-      {/* 주문 내역 섹션 */}
-      <div className="pt-5">
-        <div className="mb-3 flex items-center justify-between px-4">
-          <h2 className="text-body-5 font-semibold text-black">주문 내역</h2>
-          <button
-            type="button"
-            onClick={() => navigate('/mypage/orders')}
-            className="flex items-center gap-0.5"
-          >
-            <span className="text-body-9 text-gray-300">전체 보기</span>
-            <ChevronRight size={14} className="text-gray-300" />
-          </button>
+      {/* 8px 구분 */}
+      <div className="h-2 bg-gray-100" />
+
+      {/* 연관 상품 — White 카드 */}
+      <div className="flex flex-col gap-4 bg-white px-3 py-3">
+        <div className="flex items-center justify-between">
+          <span className="text-body-1 text-black">최근 찾던 상품의 연관 상품</span>
+          <span className="text-body-10 text-gray-300">광고</span>
         </div>
-        <div className="scrollbar-hide flex gap-3 overflow-x-auto px-4 pb-2">
-          {ORDERS.map((order) => (
-            <OrderCard key={order.id} order={order} onAddToCart={handleAddToCart} />
+        <div className="scrollbar-hide flex gap-3 overflow-x-auto">
+          {Array.from({ length: 4 }, (_, colIdx) => (
+            <div key={colIdx} className="flex shrink-0 flex-col gap-2.5">
+              <RelatedProductCard product={RELATED_PRODUCTS[colIdx * 2]} />
+              <RelatedProductCard product={RELATED_PRODUCTS[colIdx * 2 + 1]} />
+            </div>
           ))}
         </div>
+      </div>
+
+      {/* 하단 링크 */}
+      <div className="flex items-center justify-center gap-6 py-4">
+        <button type="button" className="text-body-10 text-gray-300">
+          고객센터
+        </button>
+        <div className="h-2 w-px bg-gray-300" />
+        <button type="button" className="text-body-10 text-gray-300">
+          로그아웃
+        </button>
       </div>
     </div>
   );

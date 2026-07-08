@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import instance from '@/api/instance';
+
 function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -9,8 +11,24 @@ function LoginPage() {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [loginError, setLoginError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const isActive = email.length > 0 && password.length > 0;
+
+  const handleLogin = async () => {
+    if (!isActive || isLoading) return;
+    setIsLoading(true);
+    setLoginError(false);
+    try {
+      const { data } = await instance.post('/api/auth/login', { email, password });
+      localStorage.setItem('accessToken', data.accessToken);
+      navigate('/');
+    } catch {
+      setLoginError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="relative flex min-h-screen w-full flex-col bg-white px-5">
@@ -115,12 +133,17 @@ function LoginPage() {
       {/* Login Button */}
       <button
         type="button"
-        disabled={!isActive}
-        className={`text-body-5 mt-3 w-full py-3.5 text-white transition-colors ${
-          isActive ? 'bg-primary-200' : 'bg-gray-200'
+        disabled={!isActive || isLoading}
+        onClick={handleLogin}
+        className={`text-body-5 mt-3 flex w-full items-center justify-center py-3.5 text-white transition-colors ${
+          isActive && !isLoading ? 'bg-primary-200' : 'bg-gray-200'
         }`}
       >
-        로그인
+        {isLoading ? (
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+        ) : (
+          '로그인'
+        )}
       </button>
 
       {/* Find Account */}
@@ -146,7 +169,7 @@ function LoginPage() {
       <button
         type="button"
         onClick={() => navigate('/register')}
-        className="text-body-5 text-primary-200 mt-4 w-full border border-gray-200 py-3.5"
+        className="text-body-5 text-primary-200 border-primary-200 mt-4 w-full border py-3.5"
       >
         회원가입
       </button>

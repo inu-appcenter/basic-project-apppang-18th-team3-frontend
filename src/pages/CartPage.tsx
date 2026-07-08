@@ -181,7 +181,7 @@ function Stepper({
   onDecrease: () => void;
 }) {
   return (
-    <div className="flex h-9 w-30 items-center justify-between rounded border border-gray-200 px-3 py-2">
+    <div className="flex h-9 w-30 items-center justify-between rounded-lg border border-black px-3 py-2">
       <button type="button" aria-label="수량 감소" onClick={onDecrease}>
         <Minus size={16} className="text-black" />
       </button>
@@ -255,7 +255,7 @@ function CartItemCard({
           </p>
 
           {/* 할인가 */}
-          <div className="flex flex-wrap items-center gap-1">
+          <div className="flex flex-wrap items-end gap-1">
             {hasDiscount && isPercentDiscount && (
               <span className="text-body-7 shrink-0 bg-red-300 px-3 font-bold text-white">
                 {item.discountRate}%
@@ -396,7 +396,7 @@ function CartPage() {
         </header>
 
         {/* 스크롤 영역 */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="scrollbar-hide flex-1 overflow-y-auto">
           {/* 전체선택 바 */}
           <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2">
             <div className="flex items-center gap-2">
@@ -430,18 +430,19 @@ function CartPage() {
           <div className="flex flex-col gap-2.5 px-3 py-2.5">
             <div className="flex items-center justify-between">
               <span className="text-body-10 text-gray-300">총 상품 가격</span>
-              <span className="text-body-10 text-black">
+              <span className="text-body-10 font-bold text-black">
                 {totalProductPrice.toLocaleString()}원
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-body-10 text-gray-300">총 배송비</span>
-              <span className="text-body-10 text-black">+ 0원</span>
+              <span className="text-body-10 font-bold text-black">+ 0원</span>
             </div>
-            <div className="border-t border-gray-200" />
-            <div className="flex items-center justify-between py-3">
+            <div className="flex items-center justify-between border-t border-gray-200 py-3">
               <span className="text-body-6 text-black">총 결제 예상 금액</span>
-              <span className="text-body-10 text-black">{totalPrice.toLocaleString()}원</span>
+              <span className="text-body-10 font-bold text-red-300">
+                {totalPrice.toLocaleString()}원
+              </span>
             </div>
           </div>
 

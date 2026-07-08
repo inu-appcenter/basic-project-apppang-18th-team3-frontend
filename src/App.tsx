@@ -19,11 +19,13 @@ function App() {
       <Routes>
         <Route element={<CommonLayout />}>
           <Route path="/" element={<MainPage />} />
-          <Route path="/search" element={<SearchPage />} />
           <Route path="/products" element={<ProductListPage />} />
-          <Route path="/chatbot" element={<ChatbotPage />} />
           <Route path="/mypage" element={<MyPage />} />
         </Route>
+
+        <Route path="/chatbot" element={<ChatbotPage />} />
+
+        <Route path="/search" element={<SearchPage />} />
 
         <Route path="/products/:productId" element={<ProductDetailPage />} />
         <Route path="/cart" element={<CartPage />} />

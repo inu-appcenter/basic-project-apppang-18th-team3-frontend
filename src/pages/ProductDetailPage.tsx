@@ -144,7 +144,7 @@ function ProductDetailPage() {
         </header>
 
         {/* 스크롤 영역 */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="scrollbar-hide flex-1 overflow-y-auto">
           {/* 이미지 슬라이더: 390×390 */}
           <div className="bg-secondary-100 relative h-97.5 w-full overflow-hidden">
             <div className="flex h-full items-center justify-center">

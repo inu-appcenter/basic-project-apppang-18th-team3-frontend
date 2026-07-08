@@ -38,14 +38,14 @@ const isPhoneValid = (v: string) => /^\d{3}-\d{4}-\d{4}$/.test(v);
 function CheckBox({ checked }: { checked: boolean }) {
   return (
     <span
-      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border transition-colors ${
+      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border transition-colors ${
         checked ? 'border-primary-200 bg-primary-200' : 'border-gray-200 bg-white'
       }`}
     >
       {checked && (
-        <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
+        <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
           <path
-            d="M1 4.5l3 3 6-7"
+            d="M1 5l3.5 3.5L11 1"
             stroke="white"
             strokeWidth="1.5"
             strokeLinecap="round"
@@ -57,6 +57,7 @@ function CheckBox({ checked }: { checked: boolean }) {
   );
 }
 
+// Figma: left gray icon area + right white input area, 52px tall, Gray-300 border
 function InputField({
   icon,
   children,
@@ -73,9 +74,13 @@ function InputField({
   else if (hasError) borderClass = 'border-red-300';
 
   return (
-    <div className={`flex items-center gap-3 border px-4 py-3.5 transition-colors ${borderClass}`}>
-      <span className="shrink-0 text-gray-300">{icon}</span>
-      {children}
+    <div className={`flex h-[52px] items-stretch border transition-colors ${borderClass}`}>
+      {/* 좌측 아이콘 영역 (Gray-100 배경, 우측 구분선) */}
+      <div className="flex w-12 shrink-0 items-center justify-center border-r border-gray-200 bg-gray-100">
+        <span className="text-gray-300">{icon}</span>
+      </div>
+      {/* 우측 입력 영역 */}
+      <div className="flex flex-1 items-center gap-2 px-3">{children}</div>
     </div>
   );
 }
@@ -179,7 +184,7 @@ function RegisterPage() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-white pb-10">
       {/* Header */}
-      <header className="relative flex items-center justify-center px-5 py-4.5">
+      <header className="relative flex items-center justify-center px-5 py-5">
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -196,137 +201,149 @@ function RegisterPage() {
             />
           </svg>
         </button>
-        <h1 className="text-body-3 text-black">회원가입</h1>
+        <h1 className="text-body-2 font-bold text-black">회원가입</h1>
       </header>
 
       {/* Logo */}
-      <div className="flex justify-center py-6">
-        <img src="/apppang-logo.png" alt="앱팡" className="h-[34px] object-contain" />
+      <div className="flex justify-center px-16 py-3">
+        <img src="/apppang-logo.png" alt="앱팡" className="h-[30px] object-contain" />
       </div>
 
       {/* Form */}
-      <div className="flex flex-col gap-5 px-5">
-        <p className="text-body-5 font-semibold text-black">회원정보를 입력해주세요</p>
+      <div className="flex flex-col px-3 pt-3">
+        <p className="text-body-7 px-1 pb-3 font-bold text-black">회원정보를 입력해주세요</p>
 
-        {/* 이메일 */}
-        <div className="flex flex-col gap-1.5">
-          <InputField icon={<Mail size={18} />} focused={emailFocused} hasError={!!emailError}>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setEmailError(null);
-              }}
-              onFocus={() => setEmailFocused(true)}
-              onBlur={handleEmailBlur}
-              placeholder="아이디(이메일)"
-              className="text-body-7 flex-1 text-black outline-none placeholder:text-gray-200"
-            />
-            {email && (
-              <button
-                type="button"
-                aria-label="지우기"
-                onClick={() => {
-                  setEmail('');
+        <div className="flex flex-col gap-2.5">
+          {/* 이메일 */}
+          <div className="flex flex-col gap-1.5">
+            <InputField icon={<Mail size={18} />} focused={emailFocused} hasError={!!emailError}>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
                   setEmailError(null);
                 }}
-                className="shrink-0 text-gray-300"
-              >
-                <X size={16} />
-              </button>
-            )}
-          </InputField>
-          {emailError && <p className="text-body-10 text-red-300">{emailError}</p>}
-        </div>
+                onFocus={() => setEmailFocused(true)}
+                onBlur={handleEmailBlur}
+                placeholder="아이디(이메일)"
+                className="text-body-7 flex-1 text-black outline-none placeholder:text-gray-300"
+              />
+              {email && (
+                <button
+                  type="button"
+                  aria-label="지우기"
+                  onClick={() => {
+                    setEmail('');
+                    setEmailError(null);
+                  }}
+                  className="shrink-0 text-gray-300"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </InputField>
+            {emailError && <p className="text-body-10 px-1 text-red-300">{emailError}</p>}
+          </div>
 
-        {/* 비밀번호 */}
-        <div className="flex flex-col gap-1.5">
-          <InputField
-            icon={<Lock size={18} />}
-            focused={passwordFocused}
-            hasError={showPasswordError}
-          >
-            <input
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onFocus={() => setPasswordFocused(true)}
-              onBlur={() => {
-                setPasswordFocused(false);
-                setPasswordTouched(true);
-              }}
-              placeholder="비밀번호"
-              className="text-body-7 flex-1 text-black outline-none placeholder:text-gray-200"
-            />
-            <button
-              type="button"
-              aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
-              onClick={() => setShowPassword((prev) => !prev)}
-              className="shrink-0 text-gray-300"
+          {/* 비밀번호 */}
+          <div className="flex flex-col gap-1.5">
+            <InputField
+              icon={<Lock size={18} />}
+              focused={passwordFocused}
+              hasError={showPasswordError}
             >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </InputField>
-          {showPasswordError && (
-            <p className="text-body-10 text-red-300">
-              비밀번호는 8자 이상, 영문+숫자 조합이어야합니다.
-            </p>
-          )}
-          {showPasswordSuccess && (
-            <p className="text-body-10 text-green-300">✓ 사용가능한 비밀번호입니다.</p>
-          )}
-        </div>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => {
+                  setPasswordFocused(false);
+                  setPasswordTouched(true);
+                }}
+                placeholder="비밀번호"
+                className="text-body-7 flex-1 text-black outline-none placeholder:text-gray-300"
+              />
+              {/* Figma: eye icon in gray rounded circle */}
+              <button
+                type="button"
+                aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-300 text-white"
+              >
+                {showPassword ? <EyeOff size={13} /> : <Eye size={13} />}
+              </button>
+            </InputField>
+            {showPasswordError && (
+              <p className="text-body-10 px-1 text-red-300">
+                비밀번호는 8자 이상, 영문+숫자 조합이어야합니다.
+              </p>
+            )}
+            {showPasswordSuccess && (
+              <p className="text-body-10 px-1 text-green-300">✓ 사용가능한 비밀번호입니다.</p>
+            )}
+          </div>
 
-        {/* 이름 */}
-        <div className="flex flex-col gap-1.5">
-          <InputField
-            icon={<User size={18} />}
-            focused={nameFocused}
-            hasError={nameTouched && !!name && !isNameValid(name)}
-          >
+          {/* 이름 */}
+          <div className="flex flex-col gap-1.5">
+            <InputField
+              icon={<User size={18} />}
+              focused={nameFocused}
+              hasError={nameTouched && !!name && !isNameValid(name)}
+            >
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onFocus={() => setNameFocused(true)}
+                onBlur={() => {
+                  setNameFocused(false);
+                  setNameTouched(true);
+                }}
+                placeholder="이름"
+                className="text-body-7 flex-1 text-black outline-none placeholder:text-gray-300"
+              />
+            </InputField>
+            {nameTouched && !!name && !isNameValid(name) && (
+              <p className="text-body-10 px-1 text-red-300">
+                한글 또는 영문 2자 이상으로 입력해 주세요.
+              </p>
+            )}
+          </div>
+
+          {/* 휴대폰 번호 */}
+          <InputField icon={<Smartphone size={18} />} focused={phoneFocused}>
             <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onFocus={() => setNameFocused(true)}
-              onBlur={() => {
-                setNameFocused(false);
-                setNameTouched(true);
-              }}
-              placeholder="이름"
-              className="text-body-7 flex-1 text-black outline-none placeholder:text-gray-200"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(formatPhone(e.target.value))}
+              onFocus={() => setPhoneFocused(true)}
+              onBlur={() => setPhoneFocused(false)}
+              placeholder="휴대폰 번호"
+              className="text-body-7 flex-1 text-black outline-none placeholder:text-gray-300"
             />
           </InputField>
-          {nameTouched && !!name && !isNameValid(name) && (
-            <p className="text-body-10 text-red-300">한글 또는 영문 2자 이상으로 입력해 주세요.</p>
-          )}
         </div>
-
-        {/* 휴대폰 번호 */}
-        <InputField icon={<Smartphone size={18} />} focused={phoneFocused}>
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(formatPhone(e.target.value))}
-            onFocus={() => setPhoneFocused(true)}
-            onBlur={() => setPhoneFocused(false)}
-            placeholder="010-0000-0000"
-            className="text-body-7 flex-1 text-black outline-none placeholder:text-gray-200"
-          />
-        </InputField>
       </div>
 
+      {/* 구분선 */}
+      <div className="mx-3 mt-5 h-px bg-gray-200" />
+
       {/* 약관 동의 */}
-      <div className="mt-8 flex flex-col gap-4 px-5">
-        <p className="text-body-7 font-semibold text-black">앱팡 서비스약관에 동의해주세요</p>
+      <div className="flex flex-col gap-0 px-3 pt-3">
+        <p className="text-body-7 px-1 pb-1 font-bold text-black">앱팡 서비스약관에 동의해주세요</p>
 
         {/* 전체 동의 */}
-        <button type="button" onClick={handleAllTerms} className="flex items-start gap-3 text-left">
+        <button
+          type="button"
+          onClick={handleAllTerms}
+          className="flex items-start gap-2 py-3 text-left"
+        >
           <CheckBox checked={allChecked} />
-          <div className="flex flex-col gap-1">
-            <span className="text-body-5 font-semibold text-black">모두 동의합니다.</span>
-            <p className="text-body-10 leading-relaxed text-gray-300">
+          <div className="flex flex-col gap-2.5 pt-0.5">
+            <span className="text-body-5 font-bold text-black">모두 동의합니다.</span>
+            <p className="text-body-9 leading-relaxed text-gray-300">
               동의에는 필수 및 선택 목적(광고성 정보 수신 포함) 에 대한 동의가 포함되어 있으며, 선택
               목적의 동의를 거부하시는 경우에도 서비스 이용이 가능합니다.
             </p>
@@ -334,13 +351,13 @@ function RegisterPage() {
         </button>
 
         {/* 개별 약관 */}
-        <div className="flex flex-col divide-y divide-gray-200 rounded border border-gray-200">
+        <div className="flex flex-col divide-y divide-gray-200 border border-gray-200 px-3 py-5">
           {TERMS.map((term) => (
-            <div key={term.id} className="flex items-center gap-3 px-4 py-3">
+            <div key={term.id} className="flex items-center gap-2 py-2.5">
               <button type="button" onClick={() => handleTerm(term.id)} aria-label={term.label}>
                 <CheckBox checked={checkedTerms[term.id]} />
               </button>
-              <p className="text-body-9 flex-1 text-black">
+              <p className="text-body-7 flex-1 text-black">
                 <span className={term.required ? 'text-primary-200' : 'text-gray-300'}>
                   {term.required ? '[필수] ' : '[선택] '}
                 </span>
@@ -357,12 +374,12 @@ function RegisterPage() {
       </div>
 
       {/* 가입하기 버튼 */}
-      <div className="mt-8 px-5">
+      <div className="mt-8 px-3">
         <button
           type="button"
           disabled={!isFormValid || isLoading}
           onClick={handleSubmit}
-          className={`text-body-5 flex w-full items-center justify-center py-3.5 font-semibold text-white transition-colors ${
+          className={`text-body-5 flex w-full items-center justify-center py-3 font-bold text-white transition-colors ${
             isFormValid && !isLoading ? 'bg-primary-200' : 'bg-gray-200'
           }`}
         >

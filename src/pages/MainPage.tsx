@@ -1,167 +1,189 @@
 import type { ReactNode } from 'react';
 import {
   Camera,
-  Coffee,
+  Clock7,
   Gift,
-  Globe,
-  Leaf,
-  Monitor,
-  Package,
+  HandPlatter,
+  Milk,
+  Pizza,
+  Popcorn,
+  Rocket,
   Search,
+  Shirt,
   ShoppingBag,
   Star,
-  Tag,
-  Zap,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // ─── Types ────────────────────────────────────────────────
-type Banner = { id: number; bgColor: string };
+type Banner = { id: number };
 
 type Category = { id: number; label: string; path: string; icon: ReactNode };
 
-type Product = {
+type ProductCard = {
   id: number;
   price: number;
-  discountedPrice?: number;
+  originalPrice?: number;
   rating: number;
   reviewCount: number;
   isRocket: boolean;
-  isFreeShipping: boolean;
-  hasTomorrow: boolean;
 };
 
 // ─── Constants ────────────────────────────────────────────
-const BANNERS: Banner[] = [
-  { id: 1, bgColor: 'bg-primary-100' },
-  { id: 2, bgColor: 'bg-secondary-100' },
-  { id: 3, bgColor: 'bg-primary-100' },
-  { id: 4, bgColor: 'bg-secondary-100' },
-  { id: 5, bgColor: 'bg-primary-100' },
-];
+const BANNERS: Banner[] = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }];
 
 const CATEGORIES: Category[] = [
   {
     id: 1,
     label: '자주산상품',
     path: '/products?category=frequent',
-    icon: <ShoppingBag size={28} />,
-  },
-  { id: 2, label: '쿠팡플레이', path: '/products?category=play', icon: <Monitor size={28} /> },
-  { id: 3, label: '로켓프레시', path: '/products?category=fresh', icon: <Leaf size={28} /> },
-  { id: 4, label: '쿠팡이츠', path: '/products?category=eats', icon: <Coffee size={28} /> },
-  { id: 5, label: '골드박스', path: '/products?category=goldbox', icon: <Gift size={28} /> },
-  { id: 6, label: '반짝세일', path: '/products?category=flash', icon: <Zap size={28} /> },
-  { id: 7, label: '패션/잡화', path: '/products?category=fashion', icon: <Tag size={28} /> },
-  { id: 8, label: 'R.LUX', path: '/products?category=luxury', icon: <Star size={28} /> },
-  { id: 9, label: '로켓배송', path: '/products?category=rocket', icon: <Package size={28} /> },
-  { id: 10, label: '로켓직구', path: '/products?category=global', icon: <Globe size={28} /> },
-];
-
-const DUMMY_PRODUCTS: Product[] = [
-  {
-    id: 1,
-    price: 58380,
-    rating: 4.8,
-    reviewCount: 31387,
-    isRocket: true,
-    isFreeShipping: false,
-    hasTomorrow: true,
+    icon: <ShoppingBag size={36} strokeWidth={1.5} />,
   },
   {
     id: 2,
-    price: 58380,
-    rating: 4.8,
-    reviewCount: 31387,
-    isRocket: true,
-    isFreeShipping: false,
-    hasTomorrow: true,
+    label: '쿠팡플레이',
+    path: '/products?category=play',
+    icon: <Popcorn size={36} strokeWidth={1.5} />,
   },
   {
     id: 3,
-    price: 58380,
-    discountedPrice: 70000,
-    rating: 4.8,
-    reviewCount: 31387,
-    isRocket: false,
-    isFreeShipping: true,
-    hasTomorrow: false,
+    label: '로켓프레시',
+    path: '/products?category=fresh',
+    icon: <Milk size={36} strokeWidth={1.5} />,
   },
   {
     id: 4,
-    price: 58380,
-    discountedPrice: 70000,
-    rating: 4.8,
-    reviewCount: 31387,
-    isRocket: false,
-    isFreeShipping: true,
-    hasTomorrow: false,
+    label: '쿠팡이츠',
+    path: '/products?category=eats',
+    icon: <Pizza size={36} strokeWidth={1.5} />,
+  },
+  {
+    id: 5,
+    label: '골드박스',
+    path: '/products?category=goldbox',
+    icon: <Gift size={36} strokeWidth={1.5} />,
+  },
+  {
+    id: 6,
+    label: '반짝세일',
+    path: '/products?category=flash',
+    icon: <Clock7 size={36} strokeWidth={1.5} />,
+  },
+  {
+    id: 7,
+    label: '패션/잡화',
+    path: '/products?category=fashion',
+    icon: <Shirt size={36} strokeWidth={1.5} />,
+  },
+  {
+    id: 8,
+    label: 'R.LUX',
+    path: '/products?category=luxury',
+    icon: <HandPlatter size={36} strokeWidth={1.5} />,
+  },
+  {
+    id: 9,
+    label: '로켓배송',
+    path: '/products?category=rocket',
+    icon: <Rocket size={36} strokeWidth={1.5} />,
+  },
+  {
+    id: 10,
+    label: '로켓직구',
+    path: '/products?category=global',
+    icon: <Rocket size={36} strokeWidth={1.5} />,
   },
 ];
 
+const DUMMY_PRODUCTS: ProductCard[] = [
+  { id: 1, price: 58380, rating: 4.8, reviewCount: 31387, isRocket: true },
+  { id: 2, price: 58380, originalPrice: 70000, rating: 4.8, reviewCount: 31387, isRocket: true },
+  { id: 3, price: 58380, rating: 4.8, reviewCount: 31387, isRocket: false },
+  { id: 4, price: 58380, originalPrice: 70000, rating: 4.8, reviewCount: 31387, isRocket: false },
+  { id: 5, price: 58380, rating: 4.8, reviewCount: 31387, isRocket: true },
+  { id: 6, price: 58380, originalPrice: 70000, rating: 4.8, reviewCount: 31387, isRocket: true },
+  { id: 7, price: 58380, rating: 4.8, reviewCount: 31387, isRocket: false },
+  { id: 8, price: 58380, originalPrice: 70000, rating: 4.8, reviewCount: 31387, isRocket: false },
+];
+
+function chunkPairs<T>(arr: T[]): T[][] {
+  const pairs: T[][] = [];
+  for (let i = 0; i < arr.length; i += 2) {
+    pairs.push(arr.slice(i, i + 2));
+  }
+  return pairs;
+}
+
 // ─── Sub-components ───────────────────────────────────────
-function StarRating({
-  rating,
-  reviewCount,
-  productId,
-}: {
-  rating: number;
-  reviewCount: number;
-  productId: number;
-}) {
+function StarRow({ rating, reviewCount }: { rating: number; reviewCount: number }) {
   return (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: 5 }, (_, i) => (
-        <Star
-          key={`star-${productId}-${i}`}
-          size={10}
-          className={
-            i < Math.floor(rating)
-              ? 'fill-yellow-300 text-yellow-300'
-              : 'fill-gray-200 text-gray-200'
-          }
-        />
-      ))}
-      <span className="text-body-12 ml-0.5 text-gray-300">({reviewCount.toLocaleString()})</span>
+    <div className="flex items-end gap-0.5">
+      <div className="flex items-center">
+        {Array.from({ length: 5 }, (_, i) => (
+          <Star
+            key={i}
+            size={12}
+            className={
+              i < Math.round(rating)
+                ? 'fill-yellow-300 text-yellow-300'
+                : 'fill-gray-200 text-gray-200'
+            }
+          />
+        ))}
+      </div>
+      <span className="text-[10px] leading-none text-gray-300">
+        ({reviewCount.toLocaleString()})
+      </span>
     </div>
   );
 }
 
-function ProductCard({ product }: { product: Product }) {
+function RocketBadge() {
+  return (
+    <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5">
+        <Rocket size={12} className="text-secondary-300" />
+        <span className="text-[10px] font-semibold leading-none text-secondary-300">로켓</span>
+      </div>
+      <span className="text-[9px] font-semibold leading-none text-secondary-200">내일도착</span>
+    </div>
+  );
+}
+
+function FreeShippingBadge() {
+  return (
+    <div className="inline-flex items-center rounded-xs bg-secondary-100 px-1 py-0.5">
+      <span className="text-[10px] font-semibold leading-none text-black">무료배송</span>
+    </div>
+  );
+}
+
+function ProductCardItem({ product }: { product: ProductCard }) {
   const navigate = useNavigate();
 
   return (
     <button
       type="button"
       onClick={() => navigate(`/products/${product.id}`)}
-      className="flex flex-col text-left"
+      className="flex w-25 shrink-0 flex-col gap-1 text-left"
     >
-      <div className="aspect-square w-full bg-gray-200" />
-      <div className="mt-2 flex flex-col gap-1">
-        {product.discountedPrice && (
-          <span className="text-body-10 text-red-300">
-            ● {product.discountedPrice.toLocaleString()}원
+      <div className="h-25 w-25 bg-gray-200" />
+      {product.originalPrice && (
+        <div className="flex items-center gap-1">
+          <div className="h-3 w-3 rounded-sm bg-gray-200" />
+          <span className="text-body-9 font-semibold text-red-300">
+            {product.price.toLocaleString()}원
           </span>
-        )}
-        <span className="text-body-7 font-bold text-black">{product.price.toLocaleString()}원</span>
-        <div className="flex flex-wrap items-center gap-1">
-          {product.isRocket && (
-            <span className="text-body-11 bg-primary-100 text-primary-200 rounded px-1 py-0.5">
-              로켓
-            </span>
-          )}
-          {product.isFreeShipping && (
-            <span className="text-body-11 rounded bg-red-300 px-1 py-0.5 text-white">무료배송</span>
-          )}
-          {product.hasTomorrow && <span className="text-body-11 text-gray-300">내일</span>}
         </div>
-        <StarRating
-          rating={product.rating}
-          reviewCount={product.reviewCount}
-          productId={product.id}
-        />
-      </div>
+      )}
+      {!product.originalPrice && (
+        <span className="text-body-9 font-semibold text-black">
+          {product.price.toLocaleString()}원
+        </span>
+      )}
+      {product.isRocket ? <RocketBadge /> : <FreeShippingBadge />}
+      <StarRow rating={product.rating} reviewCount={product.reviewCount} />
     </button>
   );
 }
@@ -186,91 +208,85 @@ function MainPage() {
   const handleTouchEnd = (e: React.TouchEvent) => {
     const diff = touchStartX.current - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 50) {
-      if (diff > 0) {
-        setCurrentBanner((prev) => (prev + 1) % BANNERS.length);
-      } else {
-        setCurrentBanner((prev) => (prev - 1 + BANNERS.length) % BANNERS.length);
-      }
+      setCurrentBanner((prev) =>
+        diff > 0 ? (prev + 1) % BANNERS.length : (prev - 1 + BANNERS.length) % BANNERS.length,
+      );
     }
   };
 
+  const productPairs = chunkPairs(DUMMY_PRODUCTS);
+
   return (
-    <div className="pb-4">
-      {/* 검색 바 */}
-      <div className="px-4 py-3">
+    <div className="flex flex-col gap-3 pb-4">
+      {/* 검색 바 — 2px black border, 24px radius */}
+      <div className="px-3 py-1.5">
         <button
           type="button"
           onClick={() => navigate('/search')}
-          className="flex w-full items-center gap-3 rounded-full border border-gray-200 px-4 py-2.5"
+          className="flex w-full items-center justify-between rounded-3xl border-2 border-black px-4 py-2"
         >
-          <Search size={16} className="shrink-0 text-gray-300" />
-          <span className="text-body-8 flex-1 text-left text-gray-200">앱팡에서 검색하세요!</span>
-          <Camera size={20} className="shrink-0 text-gray-300" />
+          <div className="flex items-center gap-2">
+            <Search size={16} className="shrink-0 text-gray-300" />
+            <span className="text-body-9 text-gray-300">앱팡에서 검색하세요!</span>
+          </div>
+          <Camera size={24} className="shrink-0 text-gray-300" />
         </button>
       </div>
 
-      {/* 배너 슬라이더 */}
+      {/* 배너 슬라이더 — 176px, Secondary-100 bg */}
       <div
-        className="relative h-48 overflow-hidden"
+        className="relative h-44 overflow-hidden bg-secondary-100"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         role="region"
         aria-label="배너 슬라이더"
       >
-        {BANNERS.map((banner, index) => (
-          <button
-            key={banner.id}
-            type="button"
-            onClick={() => navigate('/products')}
-            aria-label={`배너 ${banner.id}`}
-            className={`absolute inset-0 flex items-center justify-center transition-opacity duration-500 ${banner.bgColor} ${
-              index === currentBanner ? 'opacity-100' : 'pointer-events-none opacity-0'
-            }`}
-          >
-            <span className="text-body-5 text-gray-300">배너 슬라이더</span>
-          </button>
-        ))}
+        <div className="flex h-full items-center justify-center">
+          <span className="text-body-5 font-bold text-black">배너 {currentBanner + 1}</span>
+        </div>
 
-        {/* 도트 인디케이터 */}
-        <div className="absolute right-0 bottom-3 left-0 z-10 flex justify-center gap-1.5">
+        {/* 도트 인디케이터 — 8×8px, active=Gray-100+Gray-200 border, inactive=transparent+Gray-200 border */}
+        <div className="absolute right-0 bottom-3 left-0 flex justify-center gap-1">
           {BANNERS.map((banner, index) => (
             <button
               key={banner.id}
               type="button"
               aria-label={`배너 ${index + 1} 보기`}
               onClick={() => setCurrentBanner(index)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                index === currentBanner ? 'w-3 bg-black' : 'w-1.5 bg-gray-200'
+              className={`h-2 w-2 rounded-full border border-gray-200 transition-colors ${
+                index === currentBanner ? 'bg-gray-100' : 'bg-transparent'
               }`}
             />
           ))}
         </div>
       </div>
 
-      {/* 카테고리 메뉴 */}
-      <div className="border-b border-gray-200 px-2 py-4">
-        <div className="grid grid-cols-5">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => navigate(cat.path)}
-              className="hover:text-primary-200 flex flex-col items-center gap-1.5 py-2 text-black transition-colors"
-            >
-              {cat.icon}
-              <span className="text-body-11 text-center leading-tight break-keep">{cat.label}</span>
-            </button>
-          ))}
-        </div>
+      {/* 카테고리 — 5열×2행, 36px 아이콘, h-[60px] 셀 */}
+      <div className="grid grid-cols-5 grid-rows-2 px-3">
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat.id}
+            type="button"
+            onClick={() => navigate(cat.path)}
+            className="flex h-15 flex-col items-center justify-center gap-0.5 text-black"
+          >
+            {cat.icon}
+            <span className="text-body-11 break-keep text-center leading-tight">{cat.label}</span>
+          </button>
+        ))}
       </div>
 
       {/* 최근 찾던 상품의 연관 상품 */}
-      <div className="pt-5">
-        <h2 className="text-body-5 mb-3 px-4 font-semibold text-black">최근 찾던 상품의 연관 상품</h2>
-        <div className="flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-hide">
-          {DUMMY_PRODUCTS.map((product) => (
-            <div key={product.id} className="w-36 shrink-0">
-              <ProductCard product={product} />
+      <div className="flex flex-col gap-3 px-3 pt-1">
+        <h2 className="text-body-7 font-bold text-black">최근 찾던 상품의 연관 상품</h2>
+
+        {/* 가로 스크롤: 2개씩 세로 컬럼 쌍 */}
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          {productPairs.map((pair, colIdx) => (
+            <div key={colIdx} className="flex shrink-0 flex-col gap-2.5">
+              {pair.map((product) => (
+                <ProductCardItem key={product.id} product={product} />
+              ))}
             </div>
           ))}
         </div>
