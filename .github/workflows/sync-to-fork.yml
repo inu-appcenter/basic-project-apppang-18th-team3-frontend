@@ -10,12 +10,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Create output directory
+        run: sh ./build.sh
+
       - name: Push to personal repo
         uses: cpina/github-action-push-to-another-repository@main
         env:
           API_TOKEN_GITHUB: ${{ secrets.FORK_SYNC_TOKEN }}
         with:
-          source-directory: '.'
+          source-directory: 'output'
           destination-github-username: 'JaeHyun10-03'
           destination-repository-name: 'basic-project-apppang-18th-team3-frontend'
           user-email: 'guswogus81@gmail.com'
