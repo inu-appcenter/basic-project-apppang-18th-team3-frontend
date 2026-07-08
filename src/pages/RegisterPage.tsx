@@ -1,8 +1,9 @@
-import { ChevronRight, Eye, EyeOff, Lock, Mail, Smartphone, User, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, EyeOff, Lock, Mail, Smartphone, User, X } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import instance from '@/api/instance';
+import CheckBox from '@/components/CheckBox';
 
 // ─── Constants ────────────────────────────────────────────
 const TERMS = [
@@ -35,28 +36,6 @@ const isNameValid = (v: string) => /^[가-힣a-zA-Z]{2,}$/.test(v);
 const isPhoneValid = (v: string) => /^\d{3}-\d{4}-\d{4}$/.test(v);
 
 // ─── Sub-components ───────────────────────────────────────
-function CheckBox({ checked }: { checked: boolean }) {
-  return (
-    <span
-      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border transition-colors ${
-        checked ? 'border-primary-200 bg-primary-200' : 'border-gray-200 bg-white'
-      }`}
-    >
-      {checked && (
-        <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-          <path
-            d="M1 5l3.5 3.5L11 1"
-            stroke="white"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      )}
-    </span>
-  );
-}
-
 // Figma: left gray icon area + right white input area, 52px tall, Gray-300 border
 function InputField({
   icon,
@@ -191,15 +170,7 @@ function RegisterPage() {
           aria-label="뒤로 가기"
           className="absolute left-5 p-1"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M15 18l-6-6 6-6"
-              stroke="#212B36"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <ChevronLeft size={24} className="text-black" />
         </button>
         <h1 className="text-body-2 font-bold text-black">회원가입</h1>
       </header>

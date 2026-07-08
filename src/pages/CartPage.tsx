@@ -2,6 +2,8 @@ import { ChevronLeft, ChevronUp, Clock4, Minus, Plus, TriangleAlert, X } from 'l
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import CheckBox from '@/components/CheckBox';
+
 // ─── Types ────────────────────────────────────────────────
 type CartItem = {
   id: number;
@@ -146,31 +148,6 @@ function Toast({ visible }: { visible: boolean }) {
   );
 }
 
-function CheckBox({ checked, onChange }: { checked: boolean; onChange: () => void }) {
-  return (
-    <button
-      type="button"
-      aria-label={checked ? '선택 해제' : '선택'}
-      onClick={onChange}
-      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border-2 transition-colors ${
-        checked ? 'border-primary-200 bg-primary-200' : 'border-gray-200 bg-white'
-      }`}
-    >
-      {checked && (
-        <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-          <path
-            d="M1 4l3 3 7-6"
-            stroke="white"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      )}
-    </button>
-  );
-}
-
 function Stepper({
   value,
   onIncrease,
@@ -218,7 +195,13 @@ function CartItemCard({
       {/* 상품 헤더: 체크박스 + 상품명/옵션 + 삭제 */}
       <div className="flex items-center justify-between px-3 py-2">
         <div className="flex min-w-0 flex-1 items-start gap-2">
-          <CheckBox checked={checked} onChange={onCheck} />
+          <button
+            type="button"
+            aria-label={checked ? '선택 해제' : '선택'}
+            onClick={onCheck}
+          >
+            <CheckBox checked={checked} />
+          </button>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <p className="text-body-10 truncate text-black">{item.name}</p>
             <p className="text-body-10 text-gray-300">{item.option}</p>
@@ -400,7 +383,13 @@ function CartPage() {
           {/* 전체선택 바 */}
           <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2">
             <div className="flex items-center gap-2">
-              <CheckBox checked={allChecked} onChange={toggleAll} />
+              <button
+                type="button"
+                aria-label={allChecked ? '전체선택 해제' : '전체선택'}
+                onClick={toggleAll}
+              >
+                <CheckBox checked={allChecked} />
+              </button>
               <span className="text-body-5 font-bold text-black">전체선택</span>
             </div>
             <button

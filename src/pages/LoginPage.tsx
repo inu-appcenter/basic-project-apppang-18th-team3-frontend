@@ -1,3 +1,4 @@
+import { ChevronRight, Eye, EyeOff, X } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -35,9 +36,7 @@ function LoginPage() {
       {/* Header */}
       <header className="flex items-center justify-end py-4.5">
         <button type="button" onClick={() => navigate('/')} aria-label="닫기" className="p-1">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M18 6L6 18M6 6l12 12" stroke="#7E7E7E" strokeWidth="2" strokeLinecap="round" />
-          </svg>
+          <X size={24} className="text-gray-300" />
         </button>
       </header>
 
@@ -69,9 +68,7 @@ function LoginPage() {
               onClick={() => setEmail('')}
               className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-200"
             >
-              <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                <path d="M1 1l6 6M7 1L1 7" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
+              <X size={8} className="text-white" />
             </button>
           )}
         </div>
@@ -97,34 +94,9 @@ function LoginPage() {
             className="shrink-0"
           >
             {showPassword ? (
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#7E7E7E"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
-                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
-                <line x1="1" y1="1" x2="23" y2="23" />
-              </svg>
+              <EyeOff size={20} className="text-gray-300" />
             ) : (
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="#7E7E7E"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
+              <Eye size={20} className="text-gray-300" />
             )}
           </button>
         </div>
@@ -150,15 +122,7 @@ function LoginPage() {
       <div className="mt-3 flex justify-end">
         <button type="button" className="text-body-9 text-primary-200 flex items-center gap-0.5">
           아이디·비밀번호 찾기
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path
-              d="M4.5 2.5L7.5 6l-3 3.5"
-              stroke="#346AFF"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <ChevronRight size={12} className="text-primary-200" />
         </button>
       </div>
 
@@ -179,15 +143,7 @@ function LoginPage() {
         <span className="text-body-9 text-black">사업자이신가요?</span>
         <button type="button" className="text-body-9 text-primary-200 flex items-center gap-0.5">
           사업자 회원 가입하기
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path
-              d="M4.5 2.5L7.5 6l-3 3.5"
-              stroke="#346AFF"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <ChevronRight size={12} className="text-primary-200" />
         </button>
       </div>
 
@@ -195,14 +151,7 @@ function LoginPage() {
       {loginError && (
         <div className="absolute top-18 left-1/2 flex w-max -translate-x-1/2 items-center gap-3 rounded-lg bg-white px-4 py-3 shadow-[4px_4px_12px_0px_rgba(0,0,0,0.2)]">
           <button type="button" onClick={() => setLoginError(false)} className="shrink-0">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path
-                d="M2 2l8 8M10 2L2 10"
-                stroke="#7E7E7E"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
+            <X size={12} className="text-gray-300" />
           </button>
           <p className="text-body-9 whitespace-nowrap text-black">
             아이디 또는 비밀번호가 일치하지 않습니다
