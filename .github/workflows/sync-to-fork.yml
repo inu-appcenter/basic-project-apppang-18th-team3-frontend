@@ -1,0 +1,18 @@
+name: Sync to personal fork
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to personal fork
+        run: |
+          git remote add fork https://x-access-token:${{ secrets.FORK_SYNC_TOKEN }}@github.com/JaeHyun10-03/basic-project-apppang-18th-team3-frontend.git
+          git push fork main --force
