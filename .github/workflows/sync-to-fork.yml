@@ -11,8 +11,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Push to personal fork
+        env:
+          FORK_TOKEN: ${{ secrets.FORK_SYNC_TOKEN }}
         run: |
-          git remote add fork https://x-access-token:${{ secrets.FORK_SYNC_TOKEN }}@github.com/JaeHyun10-03/basic-project-apppang-18th-team3-frontend.git
+          git remote add fork https://x-access-token:${FORK_TOKEN}@github.com/JaeHyun10-03/basic-project-apppang-18th-team3-frontend.git
           git push fork main --force
