@@ -9,13 +9,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
 
-      - name: Push to personal fork
+      - name: Push to personal repo
+        uses: cpina/github-action-push-to-another-repository@main
         env:
-          FORK_TOKEN: ${{ secrets.FORK_SYNC_TOKEN }}
-        run: |
-          git remote add fork https://x-access-token:${FORK_TOKEN}@github.com/JaeHyun10-03/basic-project-apppang-18th-team3-frontend.git
-          git push fork main --force
+          API_TOKEN_GITHUB: ${{ secrets.FORK_SYNC_TOKEN }}
+        with:
+          source-directory: '.'
+          destination-github-username: 'JaeHyun10-03'
+          destination-repository-name: 'basic-project-apppang-18th-team3-frontend'
+          user-email: 'guswogus81@gmail.com'
+          commit-message: ${{ github.event.commits[0].message }}
+          target-branch: main
