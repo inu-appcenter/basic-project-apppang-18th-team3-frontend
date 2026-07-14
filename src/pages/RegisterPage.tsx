@@ -1,9 +1,20 @@
-import { ChevronLeft, ChevronRight, Eye, EyeOff, Lock, Mail, Smartphone, User, X } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  Smartphone,
+  User,
+  X,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import instance from '@/api/instance';
+import { checkEmail, login, signup } from '@/api/auth';
 import CheckBox from '@/components/CheckBox';
+import { useAuthStore } from '@/store/authStore';
 
 // ─── Constants ────────────────────────────────────────────
 const TERMS = [
@@ -67,6 +78,7 @@ function InputField({
 // ─── Page ─────────────────────────────────────────────────
 function RegisterPage() {
   const navigate = useNavigate();
+  const setAuth = useAuthStore((state) => state.setAuth);
 
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -94,6 +106,7 @@ function RegisterPage() {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   // ── Derived ───────────────────────────────────────────
   const allChecked = TERMS.every((t) => checkedTerms[t.id]);
@@ -119,10 +132,10 @@ function RegisterPage() {
       return;
     }
     try {
-      await instance.get(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
-      setEmailError(null);
+      const { available } = await checkEmail(email);
+      setEmailError(available ? null : '이미 사용 중인 이메일입니다.');
     } catch {
-      setEmailError('이미 사용 중인 이메일입니다.');
+      setEmailError('이메일 확인 중 오류가 발생했습니다.');
     }
   };
 
@@ -146,15 +159,18 @@ function RegisterPage() {
     if (!isFormValid || isLoading) return;
     setIsLoading(true);
     try {
-      await instance.post('/api/auth/register', {
+      await signup({
         email,
         password,
         name,
-        phone: phone.replace(/-/g, ''),
+        phoneNumber: phone.replace(/-/g, ''),
+        agreedRequiredTerms: requiredChecked,
       });
+      const { token, user } = await login({ email, password });
+      setAuth(token, user);
       navigate('/');
     } catch {
-      // 에러 처리
+      setSubmitError('회원가입 중 오류가 발생했습니다. 다시 시도해 주세요.');
     } finally {
       setIsLoading(false);
     }
@@ -360,6 +376,7 @@ function RegisterPage() {
             '가입하기'
           )}
         </button>
+        {submitError && <p className="text-body-10 mt-2 text-center text-red-300">{submitError}</p>}
       </div>
     </div>
   );

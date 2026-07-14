@@ -2,10 +2,12 @@ import { ChevronRight, Eye, EyeOff, X } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import instance from '@/api/instance';
+import { login } from '@/api/auth';
+import { useAuthStore } from '@/store/authStore';
 
 function LoginPage() {
   const navigate = useNavigate();
+  const setAuth = useAuthStore((state) => state.setAuth);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -21,8 +23,8 @@ function LoginPage() {
     setIsLoading(true);
     setLoginError(false);
     try {
-      const { data } = await instance.post('/api/auth/login', { email, password });
-      localStorage.setItem('accessToken', data.accessToken);
+      const { token, user } = await login({ email, password });
+      setAuth(token, user);
       navigate('/');
     } catch {
       setLoginError(true);
