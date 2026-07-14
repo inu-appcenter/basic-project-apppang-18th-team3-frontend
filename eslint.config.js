@@ -52,7 +52,15 @@ export default tseslint.config(
       '@typescript-eslint/no-use-before-define': ['error'],
       'import/no-extraneous-dependencies': [
         'error',
-        { devDependencies: ['vite.config.ts', 'eslint.config.js'] }
+        {
+          devDependencies: [
+            'vite.config.ts',
+            'eslint.config.js',
+            '**/playwright.config.ts',
+            '**/playwright.live.config.ts',
+            '**/e2e/**',
+          ],
+        }
       ],
       // TypeScript 컴파일러가 이미 검사하는 규칙들 비활성화
       'no-undef': 'off',
@@ -72,6 +80,12 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-return': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
+    },
+  },
+  {
+    files: ['e2e/**/*.ts'],
+    rules: {
+      'no-console': 'off',
     },
   },
   prettierPlugin,
