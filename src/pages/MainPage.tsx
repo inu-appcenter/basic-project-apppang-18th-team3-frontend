@@ -16,9 +16,10 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// ─── Types ────────────────────────────────────────────────
-type Banner = { id: number };
+import { getBanners } from '@/api/banner';
+import type { BannerResponse } from '@/types/banner';
 
+// ─── Types ────────────────────────────────────────────────
 type Category = { id: number; label: string; path: string; icon: ReactNode };
 
 type ProductCard = {
@@ -31,8 +32,6 @@ type ProductCard = {
 };
 
 // ─── Constants ────────────────────────────────────────────
-const BANNERS: Banner[] = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }];
-
 const CATEGORIES: Category[] = [
   {
     id: 1,
@@ -144,17 +143,17 @@ function RocketBadge() {
     <div className="flex items-center gap-1">
       <div className="flex items-center gap-0.5">
         <Rocket size={12} className="text-secondary-300" />
-        <span className="text-[10px] font-semibold leading-none text-secondary-300">로켓</span>
+        <span className="text-secondary-300 text-[10px] leading-none font-semibold">로켓</span>
       </div>
-      <span className="text-[9px] font-semibold leading-none text-secondary-200">내일도착</span>
+      <span className="text-secondary-200 text-[9px] leading-none font-semibold">내일도착</span>
     </div>
   );
 }
 
 function FreeShippingBadge() {
   return (
-    <div className="inline-flex items-center rounded-xs bg-secondary-100 px-1 py-0.5">
-      <span className="text-[10px] font-semibold leading-none text-black">무료배송</span>
+    <div className="bg-secondary-100 inline-flex items-center rounded-xs px-1 py-0.5">
+      <span className="text-[10px] leading-none font-semibold text-black">무료배송</span>
     </div>
   );
 }
@@ -191,25 +190,34 @@ function ProductCardItem({ product }: { product: ProductCard }) {
 // ─── Page ─────────────────────────────────────────────────
 function MainPage() {
   const navigate = useNavigate();
+  const [banners, setBanners] = useState<BannerResponse[]>([]);
   const [currentBanner, setCurrentBanner] = useState(0);
   const touchStartX = useRef(0);
 
   useEffect(() => {
+    getBanners()
+      .then(setBanners)
+      .catch(() => setBanners([]));
+  }, []);
+
+  useEffect(() => {
+    if (banners.length === 0) return undefined;
     const timer = setInterval(() => {
-      setCurrentBanner((prev) => (prev + 1) % BANNERS.length);
+      setCurrentBanner((prev) => (prev + 1) % banners.length);
     }, 3000);
     return () => clearInterval(timer);
-  }, []);
+  }, [banners.length]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    if (banners.length === 0) return;
     const diff = touchStartX.current - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 50) {
       setCurrentBanner((prev) =>
-        diff > 0 ? (prev + 1) % BANNERS.length : (prev - 1 + BANNERS.length) % BANNERS.length,
+        diff > 0 ? (prev + 1) % banners.length : (prev - 1 + banners.length) % banners.length,
       );
     }
   };
@@ -235,19 +243,32 @@ function MainPage() {
 
       {/* 배너 슬라이더 — 176px, Secondary-100 bg */}
       <div
-        className="relative h-44 overflow-hidden bg-secondary-100"
+        className="bg-secondary-100 relative h-44 overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         role="region"
         aria-label="배너 슬라이더"
       >
-        <div className="flex h-full items-center justify-center">
-          <span className="text-body-5 font-bold text-black">배너 {currentBanner + 1}</span>
-        </div>
+        {banners.length > 0 ? (
+          <button
+            type="button"
+            aria-label={`배너 ${currentBanner + 1} 이동`}
+            onClick={() => navigate(banners[currentBanner].linkUrl)}
+            className="flex h-full w-full items-center justify-center"
+          >
+            <img
+              src={banners[currentBanner].imageUrl}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          </button>
+        ) : (
+          <div className="flex h-full items-center justify-center" />
+        )}
 
         {/* 도트 인디케이터 — 8×8px, active=Gray-100+Gray-200 border, inactive=transparent+Gray-200 border */}
         <div className="absolute right-0 bottom-3 left-0 flex justify-center gap-1">
-          {BANNERS.map((banner, index) => (
+          {banners.map((banner, index) => (
             <button
               key={banner.id}
               type="button"
@@ -271,7 +292,7 @@ function MainPage() {
             className="flex h-15 flex-col items-center justify-center gap-0.5 text-black"
           >
             {cat.icon}
-            <span className="text-body-11 break-keep text-center leading-tight">{cat.label}</span>
+            <span className="text-body-11 text-center leading-tight break-keep">{cat.label}</span>
           </button>
         ))}
       </div>
@@ -281,7 +302,7 @@ function MainPage() {
         <h2 className="text-body-7 font-bold text-black">최근 찾던 상품의 연관 상품</h2>
 
         {/* 가로 스크롤: 2개씩 세로 컬럼 쌍 */}
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-2">
           {productPairs.map((pair, colIdx) => (
             <div key={colIdx} className="flex shrink-0 flex-col gap-2.5">
               {pair.map((product) => (
