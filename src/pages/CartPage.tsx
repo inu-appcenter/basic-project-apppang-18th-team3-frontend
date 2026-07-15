@@ -1,57 +1,33 @@
-import { ChevronLeft, ChevronUp, Clock4, Minus, Plus, TriangleAlert, X } from 'lucide-react';
+import { ChevronLeft, ChevronUp, Minus, Plus, TriangleAlert, X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { deleteCartItem, getCart, updateCartQuantity } from '@/api/cart';
 import CheckBox from '@/components/CheckBox';
+import type { CartItemResponse } from '@/types/cart';
 
 // ─── Types ────────────────────────────────────────────────
+// 실제 CartItemResponse엔 브랜드/옵션/배송정보/할인율 등이 없어(cartItemId,
+// productId, productName, price, quantity, subtotal뿐) UI가 요구하던 필드는 뺐다.
 type CartItem = {
   id: number;
-  brand: string;
+  productId: number;
   name: string;
-  option: string;
-  monthlyBuyers: string;
-  deliveryDate: string;
-  countdown: string;
-  originalPrice: number;
   price: number;
-  discountRate?: number;
-  unitPrice?: string;
-  hasRocket: boolean;
-  tradeInText?: string;
+  quantity: number;
+  subtotal: number;
 };
 
-// ─── Constants ────────────────────────────────────────────
-const CART_ITEMS: CartItem[] = [
-  {
-    id: 1,
-    brand: 'Apple',
-    name: 'Apple 2026 아이패드 에어 11(M4 모델)',
-    option: '옵션 : 스페이스 그레이, 128GB, Wi-Fi',
-    monthlyBuyers: '한달구매 2천+',
-    deliveryDate: '내일(목) 도착',
-    countdown: '02:32:31',
-    originalPrice: 949000,
-    price: 917490,
-    discountRate: 3,
-    hasRocket: true,
-    tradeInText: '구매 시 쓰던 기기 보상판매 신청 가능',
-  },
-  {
-    id: 2,
-    brand: '허글리',
-    name: '허글리 8IN1 딥 클린 초 고농축 캡슐 세탁세제 코튼캔디 향, 100개입 1개',
-    option: '옵션 : 스페이스 그레이, 128GB, Wi-Fi',
-    monthlyBuyers: '한달구매 2만+',
-    deliveryDate: '내일(목) 도착',
-    countdown: '02:32:31',
-    originalPrice: 6600,
-    price: 3300,
-    discountRate: 50,
-    unitPrice: '10g당 151원',
-    hasRocket: true,
-  },
-];
+function toCartItem(res: CartItemResponse): CartItem {
+  return {
+    id: res.cartItemId,
+    productId: res.productId,
+    name: res.productName,
+    price: res.price,
+    quantity: res.quantity,
+    subtotal: res.subtotal,
+  };
+}
 
 // ─── Sub-components ───────────────────────────────────────
 function PriceSheet({
@@ -172,7 +148,6 @@ function Stepper({
 
 function CartItemCard({
   item,
-  quantity,
   checked,
   onCheck,
   onDelete,
@@ -180,32 +155,21 @@ function CartItemCard({
   onDecrease,
 }: {
   item: CartItem;
-  quantity: number;
   checked: boolean;
   onCheck: () => void;
   onDelete: () => void;
   onIncrease: () => void;
   onDecrease: () => void;
 }) {
-  const hasDiscount = !!item.discountRate;
-  const isPercentDiscount = item.discountRate && item.discountRate >= 10;
-
   return (
     <div className="flex flex-col border-b border-gray-200">
-      {/* 상품 헤더: 체크박스 + 상품명/옵션 + 삭제 */}
+      {/* 상품 헤더: 체크박스 + 상품명 + 삭제 */}
       <div className="flex items-center justify-between px-3 py-2">
         <div className="flex min-w-0 flex-1 items-start gap-2">
-          <button
-            type="button"
-            aria-label={checked ? '선택 해제' : '선택'}
-            onClick={onCheck}
-          >
+          <button type="button" aria-label={checked ? '선택 해제' : '선택'} onClick={onCheck}>
             <CheckBox checked={checked} />
           </button>
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <p className="text-body-10 truncate text-black">{item.name}</p>
-            <p className="text-body-10 text-gray-300">{item.option}</p>
-          </div>
+          <p className="text-body-10 min-w-0 flex-1 truncate text-black">{item.name}</p>
         </div>
         <button type="button" aria-label="상품 삭제" onClick={onDelete} className="ml-2 shrink-0">
           <X size={20} className="text-gray-300" />
@@ -219,54 +183,54 @@ function CartItemCard({
 
         {/* 정보 */}
         <div className="flex flex-1 flex-col gap-2">
-          {/* 브랜드 */}
-          <p className="text-body-10 text-black">{item.brand}</p>
-
-          {/* 월구매 */}
-          <p className="text-body-10 text-black">{item.monthlyBuyers}</p>
-
-          {/* 배송 */}
-          <div className="flex flex-wrap items-center gap-1">
-            <span className="text-body-10 text-green-300">{item.deliveryDate}</span>
-            <Clock4 size={12} className="text-gray-300" />
-            <span className="text-body-10 text-black">{item.countdown} 내 주문 시</span>
-          </div>
-
-          {/* 가격 */}
-          <p className="text-body-10 text-gray-300 line-through">
-            {item.originalPrice.toLocaleString()}원
-          </p>
-
-          {/* 할인가 */}
-          <div className="flex flex-wrap items-end gap-1">
-            {hasDiscount && isPercentDiscount && (
-              <span className="text-body-7 shrink-0 bg-red-300 px-3 font-bold text-white">
-                {item.discountRate}%
-              </span>
-            )}
-            {hasDiscount && !isPercentDiscount && (
-              <span className="text-body-10 font-semibold text-black">{item.discountRate}%</span>
-            )}
-            <span
-              className={`text-body-5 font-bold ${hasDiscount && isPercentDiscount ? 'text-red-300' : 'text-black'}`}
-            >
-              {item.price.toLocaleString()}원
-            </span>
-            {item.unitPrice && (
-              <span className="text-body-10 text-red-300">({item.unitPrice})</span>
-            )}
-            {item.hasRocket && (
-              <span className="text-body-9 text-secondary-300 font-semibold">로켓</span>
-            )}
-          </div>
-
-          {/* 보상판매 텍스트 */}
-          {item.tradeInText && (
-            <p className="text-body-10 text-secondary-300">{item.tradeInText}</p>
-          )}
+          <span className="text-body-5 font-bold text-black">{item.price.toLocaleString()}원</span>
+          <span className="text-body-10 text-gray-300">
+            소계 {item.subtotal.toLocaleString()}원
+          </span>
 
           {/* 수량 스테퍼 */}
-          <Stepper value={quantity} onIncrease={onIncrease} onDecrease={onDecrease} />
+          <Stepper value={item.quantity} onIncrease={onIncrease} onDecrease={onDecrease} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmDeleteModal({
+  open,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <button
+        type="button"
+        aria-label="닫기"
+        onClick={onCancel}
+        className="absolute inset-0 bg-black/60"
+      />
+      <div className="relative w-72 rounded-xl bg-white p-5">
+        <p className="text-body-7 mb-4 text-center text-black">상품을 삭제하시겠습니까?</p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="text-body-9 flex-1 rounded border border-gray-200 py-2.5 font-semibold text-black"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="text-body-9 bg-primary-200 flex-1 rounded py-2.5 font-semibold text-white"
+          >
+            삭제
+          </button>
         </div>
       </div>
     </div>
@@ -277,12 +241,27 @@ function CartItemCard({
 function CartPage() {
   const navigate = useNavigate();
 
-  const [quantities, setQuantities] = useState<Record<number, number>>({ 1: 2, 2: 1 });
-  const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set([1, 2]));
-  const [items, setItems] = useState(CART_ITEMS);
+  const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [priceSheetOpen, setPriceSheetOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | 'checked' | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    setError(false);
+    getCart()
+      .then((res) => {
+        const cartItems = res.items.map(toCartItem);
+        setItems(cartItems);
+        setCheckedIds(new Set(cartItems.map((item) => item.id)));
+      })
+      .catch(() => setError(true))
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const showToast = useCallback(() => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -316,7 +295,7 @@ function CartPage() {
     });
   };
 
-  const deleteItem = (id: number) => {
+  const removeItemLocal = (id: number) => {
     setItems((prev) => prev.filter((item) => item.id !== id));
     setCheckedIds((prev) => {
       const next = new Set(prev);
@@ -325,31 +304,43 @@ function CartPage() {
     });
   };
 
-  const deleteChecked = () => {
-    setItems((prev) => prev.filter((item) => !checkedIds.has(item.id)));
-    setCheckedIds(new Set());
+  const confirmDelete = () => {
+    if (pendingDeleteId === 'checked') {
+      const idsToDelete = Array.from(checkedIds);
+      idsToDelete.forEach((id) => {
+        removeItemLocal(id);
+        deleteCartItem(id).catch(() => {});
+      });
+    } else if (pendingDeleteId !== null) {
+      const id = pendingDeleteId;
+      removeItemLocal(id);
+      deleteCartItem(id).catch(() => {});
+    }
+    setPendingDeleteId(null);
   };
 
   const changeQty = (id: number, delta: number) => {
-    const current = quantities[id] ?? 1;
-    if (delta < 0 && current <= 1) {
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
+    if (delta < 0 && item.quantity <= 1) {
       showToast();
       return;
     }
-    setQuantities((prev) => ({ ...prev, [id]: current + delta }));
+    const nextQuantity = item.quantity + delta;
+    const prevItems = items;
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === id ? { ...i, quantity: nextQuantity, subtotal: i.price * nextQuantity } : i,
+      ),
+    );
+    updateCartQuantity(id, { quantity: nextQuantity }).catch(() => setItems(prevItems));
   };
 
   const checkedItems = items.filter((item) => checkedIds.has(item.id));
-  const totalOriginalPrice = checkedItems.reduce(
-    (sum, item) => sum + item.originalPrice * (quantities[item.id] ?? 1),
-    0,
-  );
-  const totalProductPrice = checkedItems.reduce(
-    (sum, item) => sum + item.price * (quantities[item.id] ?? 1),
-    0,
-  );
-  const totalDiscount = totalOriginalPrice - totalProductPrice;
-  const totalCount = checkedItems.reduce((sum, item) => sum + (quantities[item.id] ?? 1), 0);
+  const totalProductPrice = checkedItems.reduce((sum, item) => sum + item.subtotal, 0);
+  const totalOriginalPrice = totalProductPrice;
+  const totalDiscount = 0;
+  const totalCount = checkedItems.reduce((sum, item) => sum + item.quantity, 0);
   const shippingFee = 0;
   const totalPrice = totalProductPrice + shippingFee;
 
@@ -363,6 +354,11 @@ function CartPage() {
         totalDiscount={totalDiscount}
         shippingFee={shippingFee}
         totalPrice={totalPrice}
+      />
+      <ConfirmDeleteModal
+        open={pendingDeleteId !== null}
+        onCancel={() => setPendingDeleteId(null)}
+        onConfirm={confirmDelete}
       />
       <div className="flex h-screen w-full max-w-120 flex-col bg-white">
         {/* 헤더: pt=20 pb=20 */}
@@ -378,92 +374,122 @@ function CartPage() {
           <h1 className="text-title-5 font-bold text-black">장바구니</h1>
         </header>
 
-        {/* 스크롤 영역 */}
-        <main className="scrollbar-hide flex-1 overflow-y-auto">
-          {/* 전체선택 바 */}
-          <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2">
-            <div className="flex items-center gap-2">
+        {isLoading && (
+          <div className="flex flex-1 items-center justify-center">
+            <span className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-gray-300" />
+          </div>
+        )}
+
+        {!isLoading && error && (
+          <div className="flex flex-1 flex-col items-center justify-center gap-2">
+            <p className="text-body-7 text-black">장바구니를 불러오지 못했습니다.</p>
+          </div>
+        )}
+
+        {!isLoading && !error && items.length === 0 && (
+          <div className="flex flex-1 flex-col items-center justify-center gap-3">
+            <p className="text-body-6 text-black">장바구니가 비어 있어요</p>
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="text-body-9 border-primary-200 text-primary-200 rounded border px-4 py-2 font-semibold"
+            >
+              쇼핑 계속하기
+            </button>
+          </div>
+        )}
+
+        {!isLoading && !error && items.length > 0 && (
+          <>
+            {/* 스크롤 영역 */}
+            <main className="scrollbar-hide flex-1 overflow-y-auto">
+              {/* 전체선택 바 */}
+              <div className="flex items-center justify-between border-b border-gray-200 px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label={allChecked ? '전체선택 해제' : '전체선택'}
+                    onClick={toggleAll}
+                  >
+                    <CheckBox checked={allChecked} />
+                  </button>
+                  <span className="text-body-5 font-bold text-black">전체선택</span>
+                </div>
+                <button
+                  type="button"
+                  disabled={checkedIds.size === 0}
+                  onClick={() => setPendingDeleteId('checked')}
+                  className="text-body-9 font-semibold text-gray-300 disabled:opacity-40"
+                >
+                  선택삭제
+                </button>
+              </div>
+
+              {/* 장바구니 아이템 목록 */}
+              {items.map((item) => (
+                <CartItemCard
+                  key={item.id}
+                  item={item}
+                  checked={checkedIds.has(item.id)}
+                  onCheck={() => toggleItem(item.id)}
+                  onDelete={() => setPendingDeleteId(item.id)}
+                  onIncrease={() => changeQty(item.id, 1)}
+                  onDecrease={() => changeQty(item.id, -1)}
+                />
+              ))}
+
+              {/* 결제 금액 */}
+              <div className="flex flex-col gap-2.5 px-3 py-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-body-10 text-gray-300">총 상품 가격</span>
+                  <span className="text-body-10 font-bold text-black">
+                    {totalProductPrice.toLocaleString()}원
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-body-10 text-gray-300">총 배송비</span>
+                  <span className="text-body-10 font-bold text-black">+ 0원</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-gray-200 py-3">
+                  <span className="text-body-6 text-black">총 결제 예상 금액</span>
+                  <span className="text-body-10 font-bold text-red-300">
+                    {totalPrice.toLocaleString()}원
+                  </span>
+                </div>
+              </div>
+
+              {/* 하단 여백 (푸터 높이만큼) */}
+              <div className="h-24" />
+            </main>
+
+            {/* 고정 푸터: 요약 + 구매 버튼 */}
+            <div className="shrink-0 border-t border-gray-200">
+              {/* 무료배송 요약 */}
+              <div className="flex items-center justify-between px-3 py-3">
+                <span className="text-body-9 font-semibold text-black">무료배송 혜택 적용됨</span>
+                <button
+                  type="button"
+                  onClick={() => setPriceSheetOpen(true)}
+                  className="flex items-center gap-1"
+                >
+                  <span className="text-body-5 font-bold text-black">
+                    {totalPrice.toLocaleString()}원
+                  </span>
+                  <ChevronUp size={16} className="text-black" />
+                </button>
+              </div>
+
+              {/* 구매 버튼: 주문/결제 페이지가 아직 없어(요구사항 범위 밖) 이동 없이 비활성화 조건만 반영 */}
               <button
                 type="button"
-                aria-label={allChecked ? '전체선택 해제' : '전체선택'}
-                onClick={toggleAll}
+                disabled={totalCount === 0}
+                className="text-body-5 bg-primary-200 w-full py-4 font-bold text-white disabled:bg-gray-200"
               >
-                <CheckBox checked={allChecked} />
+                총 {totalCount}개 상품 구매하기
               </button>
-              <span className="text-body-5 font-bold text-black">전체선택</span>
             </div>
-            <button
-              type="button"
-              onClick={deleteChecked}
-              className="text-body-9 font-semibold text-gray-300"
-            >
-              선택삭제
-            </button>
-          </div>
-
-          {/* 장바구니 아이템 목록 */}
-          {items.map((item) => (
-            <CartItemCard
-              key={item.id}
-              item={item}
-              quantity={quantities[item.id] ?? 1}
-              checked={checkedIds.has(item.id)}
-              onCheck={() => toggleItem(item.id)}
-              onDelete={() => deleteItem(item.id)}
-              onIncrease={() => changeQty(item.id, 1)}
-              onDecrease={() => changeQty(item.id, -1)}
-            />
-          ))}
-
-          {/* 결제 금액 */}
-          <div className="flex flex-col gap-2.5 px-3 py-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-body-10 text-gray-300">총 상품 가격</span>
-              <span className="text-body-10 font-bold text-black">
-                {totalProductPrice.toLocaleString()}원
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-body-10 text-gray-300">총 배송비</span>
-              <span className="text-body-10 font-bold text-black">+ 0원</span>
-            </div>
-            <div className="flex items-center justify-between border-t border-gray-200 py-3">
-              <span className="text-body-6 text-black">총 결제 예상 금액</span>
-              <span className="text-body-10 font-bold text-red-300">
-                {totalPrice.toLocaleString()}원
-              </span>
-            </div>
-          </div>
-
-          {/* 하단 여백 (푸터 높이만큼) */}
-          <div className="h-24" />
-        </main>
-
-        {/* 고정 푸터: 요약 + 구매 버튼 */}
-        <div className="shrink-0 border-t border-gray-200">
-          {/* 무료배송 요약 */}
-          <div className="flex items-center justify-between px-3 py-3">
-            <span className="text-body-9 font-semibold text-black">무료배송 혜택 적용됨</span>
-            <button
-              type="button"
-              onClick={() => setPriceSheetOpen(true)}
-              className="flex items-center gap-1"
-            >
-              <span className="text-body-5 font-bold text-black">
-                {totalPrice.toLocaleString()}원
-              </span>
-              <ChevronUp size={16} className="text-black" />
-            </button>
-          </div>
-
-          {/* 구매 버튼 */}
-          <button
-            type="button"
-            className="text-body-5 bg-primary-200 w-full py-4 font-bold text-white"
-          >
-            총 {totalCount}개 상품 구매하기
-          </button>
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
