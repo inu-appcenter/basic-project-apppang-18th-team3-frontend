@@ -2,6 +2,9 @@ import { ChevronDown, ChevronLeft, Star } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { getProducts } from '@/api/product';
+import type { ProductItemResponse } from '@/types/product';
+
 // ─── Types ────────────────────────────────────────────────
 type SortOption = { label: string; value: string };
 
@@ -29,62 +32,25 @@ const SORT_OPTIONS: SortOption[] = [
   { label: '최고가순', value: 'price_desc' },
 ];
 
-const PRODUCT_POOL: Omit<Product, 'id'>[] = [
-  {
-    name: '프링글스 사워크림 앤 어니언, 110g, 2개',
-    price: 3300,
-    originalPrice: 6660,
-    discountRate: 50,
-    unitPrice: '10g당 151원',
-    isFreeShipping: true,
-    isFreeReturn: true,
-    isRocket: false,
-    rating: 4.8,
-    reviewCount: 31387,
-  },
-  {
-    name: '찰떡파이 명가 두바이st 피스타치오맛 쫀득, 300g 1개',
-    price: 3300,
-    unitPrice: '10g당 151원',
-    isFreeShipping: true,
-    isFreeReturn: true,
-    isRocket: false,
-    rating: 4.8,
-    reviewCount: 31387,
-  },
-  {
-    name: '김치사발면 86g, 6개',
-    price: 3300,
-    unitPrice: '10g당 151원',
-    isFreeShipping: true,
-    isFreeReturn: true,
-    isRocket: false,
-    condition: '새 상품, 반품-미개봉 82',
-    rating: 4.8,
-    reviewCount: 31387,
-  },
-  {
-    name: '농심 짜파게티 140g, 10개',
-    price: 3300,
-    discountRate: 50,
-    unitPrice: '10g당 151원',
-    isFreeShipping: true,
-    isFreeReturn: true,
-    isRocket: true,
-    deliveryDate: '내일(목) 새벽 도착',
-    rating: 4.8,
-    reviewCount: 31387,
-  },
-];
-
 const PAGE_SIZE = 10;
-const MAX_ITEMS = 30;
 
-function generateProducts(startId: number, count: number): Product[] {
-  return Array.from({ length: count }, (_, i) => ({
-    id: startId + i,
-    ...PRODUCT_POOL[(startId + i) % PRODUCT_POOL.length],
-  }));
+// ProductItemResponse -> UI Product 매퍼. shippingInfo/unitPrice는 서버가
+// 이미 포맷된 문자열로 내려주므로 그대로 사용한다.
+function toProduct(item: ProductItemResponse): Product {
+  return {
+    id: item.productId,
+    name: item.name,
+    price: item.price,
+    originalPrice: item.originalPrice || undefined,
+    discountRate: item.discountRate || undefined,
+    unitPrice: item.unitPrice || undefined,
+    isFreeShipping: item.shippingInfo === '무료배송',
+    isFreeReturn: false,
+    isRocket: item.rocketDelivery,
+    deliveryDate: item.rocketDelivery ? item.shippingInfo : undefined,
+    rating: item.averageRating,
+    reviewCount: item.reviewCount,
+  };
 }
 
 // ─── Sub-components ───────────────────────────────────────
@@ -193,10 +159,14 @@ function ProductCard({ product }: { product: Product }) {
 function ProductListPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const title = searchParams.get('category') ?? searchParams.get('keyword') ?? '상품';
+  const categoryId = searchParams.get('categoryId');
+  const keyword = searchParams.get('keyword') ?? searchParams.get('q') ?? undefined;
+  const title = searchParams.get('category') ?? keyword ?? '상품';
 
-  const [products, setProducts] = useState<Product[]>(() => generateProducts(0, PAGE_SIZE));
+  const [products, setProducts] = useState<Product[]>([]);
+  const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [sortIndex, setSortIndex] = useState(0);
   const [sortOpen, setSortOpen] = useState(false);
@@ -207,15 +177,29 @@ function ProductListPage() {
   const loadMore = useCallback(() => {
     if (isLoading || !hasMore) return;
     setIsLoading(true);
-    setTimeout(() => {
-      setProducts((prev) => {
-        const next = [...prev, ...generateProducts(prev.length, PAGE_SIZE)];
-        if (next.length >= MAX_ITEMS) setHasMore(false);
-        return next;
-      });
-      setIsLoading(false);
-    }, 800);
-  }, [isLoading, hasMore]);
+    setError(false);
+    getProducts({
+      categoryId: categoryId ? Number(categoryId) : undefined,
+      keyword,
+      page,
+      size: PAGE_SIZE,
+      sort: SORT_OPTIONS[sortIndex].value,
+    })
+      .then((res) => {
+        setProducts((prev) => [...prev, ...res.items.map(toProduct)]);
+        setHasMore(res.hasNext);
+        setPage((prev) => prev + 1);
+      })
+      .catch(() => setError(true))
+      .finally(() => setIsLoading(false));
+  }, [isLoading, hasMore, categoryId, keyword, page, sortIndex]);
+
+  // 정렬 변경 시 처음부터 다시 조회
+  useEffect(() => {
+    setProducts([]);
+    setPage(1);
+    setHasMore(true);
+  }, [sortIndex, categoryId, keyword]);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -303,7 +287,16 @@ function ProductListPage() {
         {isLoading && (
           <span className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-gray-300" />
         )}
-        {!hasMore && <p className="text-body-10 text-gray-300">마지막 상품입니다</p>}
+        {error && (
+          <p className="text-body-10 text-red-300">
+            상품을 불러오지 못했습니다. 다시 시도해 주세요.
+          </p>
+        )}
+        {!isLoading && !error && !hasMore && (
+          <p className="text-body-10 text-gray-300">
+            {products.length === 0 ? '상품이 없습니다' : '마지막 상품입니다'}
+          </p>
+        )}
       </div>
     </div>
   );
