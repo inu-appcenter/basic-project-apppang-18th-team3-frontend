@@ -11,7 +11,13 @@ import {
   User,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+import { logout } from '@/api/auth';
+import { getMe, getOrders } from '@/api/mypage';
+import { useAuthStore } from '@/store/authStore';
+import type { OrderSummaryResponse, UserMeResponse } from '@/types/mypage';
 
 // ─── Types ────────────────────────────────────────────────
 type OrderStatus = '배송완료' | '배송중' | '주문접수';
@@ -21,6 +27,16 @@ type Order = {
   status: OrderStatus;
   hasRocket: boolean;
 };
+
+// 백엔드 주문 status 값이 이 세 한글 라벨과 정확히 일치하는지 확인되지 않아
+// 매칭 실패 시 "주문접수"로 폴백한다 (docs/api-integration-issues.md 참고).
+function toOrder(res: OrderSummaryResponse): Order {
+  const knownStatuses: OrderStatus[] = ['배송완료', '배송중', '주문접수'];
+  const status = (knownStatuses as string[]).includes(res.status)
+    ? (res.status as OrderStatus)
+    : '주문접수';
+  return { id: res.orderId, status, hasRocket: false };
+}
 
 type RelatedProduct = {
   id: number;
@@ -39,16 +55,6 @@ type QuickMenu = {
 };
 
 // ─── Constants ────────────────────────────────────────────
-const IS_LOGGED_IN = true;
-const USER_NAME = '홍길동';
-
-const ORDERS: Order[] = [
-  { id: 1, status: '배송완료', hasRocket: true },
-  { id: 2, status: '배송중', hasRocket: false },
-  { id: 3, status: '주문접수', hasRocket: true },
-  { id: 4, status: '배송완료', hasRocket: true },
-];
-
 const RELATED_PRODUCTS: RelatedProduct[] = [
   { id: 1, price: 58380, rating: 4.8, reviewCount: 31387, hasRocket: true },
   {
@@ -180,12 +186,39 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
 // ─── Page ─────────────────────────────────────────────────
 function MyPage() {
   const navigate = useNavigate();
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const authUser = useAuthStore((state) => state.user);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+
+  const [me, setMe] = useState<UserMeResponse | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    getMe()
+      .then(setMe)
+      .catch(() => setMe(null));
+    getOrders()
+      .then((res) => setOrders(res.slice(0, 5).map(toOrder)))
+      .catch(() => setOrders([]));
+  }, [isLoggedIn]);
+
+  const handleLogout = () => {
+    logout()
+      .catch(() => {})
+      .finally(() => {
+        clearAuth();
+        navigate('/');
+      });
+  };
+
+  const displayName = me?.name ?? authUser?.name ?? '';
 
   return (
     <div className="flex flex-col bg-gray-100 pb-4">
       {/* 프로필 헤더 — Primary-100 배경 */}
       <div className="bg-primary-100 flex flex-col gap-2.5 px-3 py-3">
-        {IS_LOGGED_IN ? (
+        {isLoggedIn ? (
           <>
             {/* 프로필 행 */}
             <div className="flex items-center justify-between py-2">
@@ -193,7 +226,7 @@ function MyPage() {
                 <div className="flex h-8 w-8 items-end justify-center overflow-hidden rounded-full bg-gray-200 ring-1 ring-white">
                   <User size={24} className="text-gray-100" />
                 </div>
-                <span className="text-xl font-bold text-black">{maskName(USER_NAME)}</span>
+                <span className="text-xl font-bold text-black">{maskName(displayName)}</span>
               </div>
               <button type="button" onClick={() => navigate('/settings')} aria-label="계정 설정">
                 <Settings size={24} className="text-black" />
@@ -209,7 +242,9 @@ function MyPage() {
                 </div>
                 <div>
                   <span className="text-xs text-gray-300">쿠페이 머니 </span>
-                  <span className="text-sm font-bold text-black">12,345 원</span>
+                  <span className="text-sm font-bold text-black">
+                    {(me?.appMoney ?? 0).toLocaleString()} 원
+                  </span>
                 </div>
               </div>
             </div>
@@ -275,7 +310,10 @@ function MyPage() {
           </button>
         </div>
         <div className="scrollbar-hide flex gap-2.5 overflow-x-auto">
-          {ORDERS.map((order) => (
+          {orders.length === 0 && (
+            <p className="text-body-10 text-gray-300">주문 내역이 없습니다</p>
+          )}
+          {orders.map((order) => (
             <OrderCard key={order.id} order={order} />
           ))}
         </div>
@@ -306,9 +344,11 @@ function MyPage() {
           고객센터
         </button>
         <div className="h-2 w-px bg-gray-300" />
-        <button type="button" className="text-body-10 text-gray-300">
-          로그아웃
-        </button>
+        {isLoggedIn && (
+          <button type="button" onClick={handleLogout} className="text-body-10 text-gray-300">
+            로그아웃
+          </button>
+        )}
       </div>
     </div>
   );
