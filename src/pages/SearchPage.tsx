@@ -2,10 +2,19 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, ChevronLeft, Info, Search, X } from 'lucide-react';
 import NavigationBar from '@/components/NavigationBar';
+import {
+  deleteSearchHistory,
+  getSearchHistory,
+  getSuggestions,
+  saveSearchHistory,
+} from '@/api/search';
+import { useAuthStore } from '@/store/authStore';
 
 const STORAGE_KEY = 'recentSearches';
 const MAX_RECENT = 10;
 
+// 백엔드에 "추천 검색어(입력 전 인기 키워드)" 조회 엔드포인트가 없어 하드코딩 유지.
+// GET /api/search/suggestions는 keyword 입력이 있을 때의 자동완성만 제공한다.
 const RECOMMENDED: string[] = [
   '휴지',
   '냅킨',
@@ -18,25 +27,6 @@ const RECOMMENDED: string[] = [
   '면도기',
   '로션',
 ];
-
-const MOCK_ALL_KEYWORDS = [
-  ...RECOMMENDED,
-  '아이폰',
-  '맥북',
-  '키보드',
-  '마우스',
-  '이어폰',
-  '노트북',
-  '태블릿',
-  '충전기',
-];
-
-function getSuggestions(query: string): string[] {
-  return MOCK_ALL_KEYWORDS.filter((k) => k.toLowerCase().includes(query.toLowerCase())).slice(
-    0,
-    12,
-  );
-}
 
 function HighlightedText({ text, query }: { text: string; query: string }) {
   const idx = text.toLowerCase().indexOf(query.toLowerCase());
@@ -52,8 +42,10 @@ function HighlightedText({ text, query }: { text: string; query: string }) {
 
 function SearchPage() {
   const navigate = useNavigate();
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestQueryRef = useRef('');
 
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -63,29 +55,60 @@ function SearchPage() {
 
   useEffect(() => {
     inputRef.current?.focus();
+
+    if (isLoggedIn) {
+      getSearchHistory()
+        .then(({ items }) => setRecentSearches(items.map((item) => item.name)))
+        .catch(() => setRecentSearches([]));
+      return;
+    }
+
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) setRecentSearches(JSON.parse(stored));
-    } catch {}
-  }, []);
+    } catch {
+      // localStorage 파싱 실패 시 빈 목록 유지
+    }
+  }, [isLoggedIn]);
 
   const saveToLocal = (list: string[]) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
   };
 
   const addRecentSearch = (keyword: string) => {
+    if (isLoggedIn) {
+      setRecentSearches((prev) =>
+        [keyword, ...prev.filter((k) => k !== keyword)].slice(0, MAX_RECENT),
+      );
+      saveSearchHistory(keyword).catch(() => {});
+      return;
+    }
     const updated = [keyword, ...recentSearches.filter((k) => k !== keyword)].slice(0, MAX_RECENT);
     setRecentSearches(updated);
     saveToLocal(updated);
   };
 
   const removeRecentSearch = (keyword: string) => {
+    if (isLoggedIn) {
+      setRecentSearches((prev) => prev.filter((k) => k !== keyword));
+      deleteSearchHistory(keyword).catch(() => {});
+      return;
+    }
     const updated = recentSearches.filter((k) => k !== keyword);
     setRecentSearches(updated);
     saveToLocal(updated);
   };
 
   const clearAllRecent = () => {
+    if (isLoggedIn) {
+      const toDelete = recentSearches;
+      setRecentSearches([]);
+      // 서버에 전체 삭제 엔드포인트가 없어 키워드별 삭제를 순차 호출한다.
+      toDelete.forEach((keyword) => {
+        deleteSearchHistory(keyword).catch(() => {});
+      });
+      return;
+    }
     setRecentSearches([]);
     localStorage.removeItem(STORAGE_KEY);
   };
@@ -99,15 +122,25 @@ function SearchPage() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const { value } = e.target;
     setQuery(value);
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (value.length >= 1) {
       debounceRef.current = setTimeout(() => {
-        setSuggestions(getSuggestions(value));
-        setShowSuggestions(true);
+        latestQueryRef.current = value;
+        getSuggestions(value)
+          .then(({ suggestions: result }) => {
+            if (latestQueryRef.current !== value) return;
+            setSuggestions(result);
+            setShowSuggestions(true);
+          })
+          .catch(() => {
+            if (latestQueryRef.current !== value) return;
+            setSuggestions([]);
+            setShowSuggestions(true);
+          });
       }, 300);
     } else {
       setSuggestions([]);
