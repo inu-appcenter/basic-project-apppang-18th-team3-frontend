@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, SendHorizontal } from 'lucide-react';
 
+import { getChatHistory, sendChatMessage } from '@/api/chat';
+import { useAuthStore } from '@/store/authStore';
+
 type Message = {
   id: string;
   role: 'bot' | 'user';
@@ -17,22 +20,12 @@ const QUICK_REPLIES = [
   '자주 묻는 질문',
 ];
 
-const BOT_RESPONSES: Record<string, string> = {
-  '상품 추천해줘':
-    '어떤 종류의 상품을 찾으시나요? 카테고리나 예산을 알려주시면 더 정확하게 추천해 드릴 수 있어요!',
-  '주문 조회':
-    '주문 번호를 알려주시면 조회해 드릴게요. 마이페이지 → 주문내역에서도 확인하실 수 있어요.',
-  '배송 문의':
-    '배송 관련 문의는 주문번호를 알려주시거나 마이페이지 → 주문내역에서 확인하실 수 있어요.',
-  '반품·교환 문의':
-    '반품/교환은 수령 후 7일 이내 신청 가능해요. 마이페이지 → 주문내역에서 신청하실 수 있어요.',
-  '자주 묻는 질문': '어떤 내용이 궁금하신가요? 배송, 결제, 반품 등 다양한 질문에 답변해 드릴게요.',
-};
+const FALLBACK_REPLY =
+  '죄송해요, 아직 해당 질문에 대한 답변을 준비 중이에요. 다른 방식으로 질문해 주시겠어요?';
 
-function getTime() {
-  const now = new Date();
-  const h = now.getHours();
-  const m = now.getMinutes();
+function getTime(date: Date = new Date()) {
+  const h = date.getHours();
+  const m = date.getMinutes();
   const ampm = h >= 12 ? '오후' : '오전';
   const hour = h % 12 || 12;
   const min = String(m).padStart(2, '0');
@@ -80,8 +73,10 @@ function LoadingBubble() {
 
 function ChatbotPage() {
   const navigate = useNavigate();
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [sessionId] = useState(() => crypto.randomUUID());
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -98,6 +93,25 @@ function ChatbotPage() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    getChatHistory()
+      .then((history) => {
+        if (history.length === 0) return;
+        setShowQuickReplies(false);
+        setMessages((prev) => [
+          ...prev,
+          ...history.map((item, index) => ({
+            id: `history-${index}-${item.createdAt}`,
+            role: (item.role === 'user' ? 'user' : 'bot') as Message['role'],
+            text: item.message,
+            time: getTime(new Date(item.createdAt)),
+          })),
+        ]);
+      })
+      .catch(() => {});
+  }, [isLoggedIn]);
 
   const sendMessage = (text: string) => {
     const trimmed = text.trim();
@@ -118,20 +132,26 @@ function ChatbotPage() {
       textareaRef.current.style.height = 'auto';
     }
 
-    setTimeout(() => {
-      const responseText =
-        BOT_RESPONSES[trimmed] ??
-        '죄송해요, 아직 해당 질문에 대한 답변을 준비 중이에요. 다른 방식으로 질문해 주시겠어요?';
-
-      const botMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'bot',
-        text: responseText,
-        time: getTime(),
-      };
-      setMessages((prev) => [...prev, botMsg]);
-      setIsLoading(false);
-    }, 1000);
+    sendChatMessage({ message: trimmed, sessionId })
+      .then((res) => {
+        const botMsg: Message = {
+          id: `${Date.now()}-bot`,
+          role: 'bot',
+          text: res.reply,
+          time: getTime(),
+        };
+        setMessages((prev) => [...prev, botMsg]);
+      })
+      .catch(() => {
+        const botMsg: Message = {
+          id: `${Date.now()}-bot`,
+          role: 'bot',
+          text: FALLBACK_REPLY,
+          time: getTime(),
+        };
+        setMessages((prev) => [...prev, botMsg]);
+      })
+      .finally(() => setIsLoading(false));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
