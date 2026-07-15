@@ -9,8 +9,14 @@ import {
   ThumbsUp,
   X,
 } from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+
+import { addToCart } from '@/api/cart';
+import { getProduct, getReviews } from '@/api/product';
+import { addWishlist, removeWishlist } from '@/api/wishlist';
+import { useAuthStore } from '@/store/authStore';
+import type { ProductDetailResponse, ReviewItemResponse } from '@/types/product';
 
 // ─── Types ────────────────────────────────────────────────
 type Review = {
@@ -24,37 +30,28 @@ type Review = {
   helpfulCount?: number;
 };
 
-// ─── Constants ────────────────────────────────────────────
-const TOTAL_SLIDES = 6;
+// 실제 리뷰 응답엔 isVerified/seller/helpfulCount 필드가 없어 기본값으로 채운다.
+function toReview(item: ReviewItemResponse): Review {
+  return {
+    id: item.reviewId,
+    rating: item.rating,
+    reviewer: item.userName,
+    isVerified: false,
+    seller: '',
+    date: item.createdAt.slice(0, 10).replace(/-/g, '.'),
+    text: item.content,
+  };
+}
 
+// ─── Constants ────────────────────────────────────────────
+// 백엔드 ProductDetailResponse엔 색상/수량 옵션 구조가 없고 optionInfo 문자열 하나뿐이라
+// 아래 두 옵션 목록은 UI 데모용으로 유지한다 (실제 옵션 변경 API 없음).
 const COLOR_OPTIONS = ['화이트 + 그레이', '화이트', '그레이'];
 
 const QUANTITY_OPTIONS = [
   { qty: '20개', discount: '9,810원 할인', savings: null },
   { qty: '40개', discount: '9,810원 할인', savings: '40개 사면 840원 절약' },
   { qty: '60개', discount: '9,810원 할인', savings: '60개 사면 1,840원 절약' },
-];
-
-const REVIEWS: Review[] = [
-  {
-    id: 1,
-    rating: 4,
-    reviewer: '이*빈',
-    isVerified: false,
-    seller: '퀸즈',
-    date: '2026.03.09',
-    text: '마크곤잘레스 논슬립 회전 어깨뿔방지 옷걸이를 선택한 이유 세줄 요약\n\n✅ 어깨뿔 방지 곡선 디자인으로 옷의 형태를 깔끔하게 유지해줘요\n✅논슬립 코팅으로 얇은 옷도 흘러내림 없이 안정적인 보관이 가능해요\n✅슬림한 두께와 회전형 고리로 옷장 공간 활용도까지 높인 실용적인 옷걸이랍니다. ...',
-  },
-  {
-    id: 2,
-    rating: 4,
-    reviewer: '이성빈',
-    isVerified: true,
-    seller: '퀸즈',
-    date: '2026.03.09',
-    text: '마크곤잘레스 논슬립 회전 어깨뿔방지 옷걸이를 선택한 이유 세줄 요약\n\n✅ 어깨뿔 방지 곡선 디자인으로 옷의 형태를 깔끔하게 유지해줘요\n✅논슬립 코팅으로 얇은 옷도 흘러내림 없이 안정적인 보관이 가능해요\n✅슬림한 두께와 회전형 고리로 옷장 공간 활용도까지 높인 실용적인 옷걸이랍니다. ...',
-    helpfulCount: 24,
-  },
 ];
 
 // ─── Sub-components ───────────────────────────────────────
@@ -122,14 +119,83 @@ function ReviewItem({ review }: { review: Review }) {
 // ─── Page ─────────────────────────────────────────────────
 function ProductDetailPage() {
   const navigate = useNavigate();
+  const { productId } = useParams<{ productId: string }>();
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+
+  const [product, setProduct] = useState<ProductDetailResponse | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [selectedColor, setSelectedColor] = useState(0);
   const [selectedQty, setSelectedQty] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [cartMessage, setCartMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!productId) return;
+    setIsLoading(true);
+    setError(false);
+    Promise.all([getProduct(productId), getReviews(productId)])
+      .then(([productRes, reviewsRes]) => {
+        setProduct(productRes);
+        setIsLiked(productRes.isWished);
+        setReviews(reviewsRes.items.map(toReview));
+      })
+      .catch(() => setError(true))
+      .finally(() => setIsLoading(false));
+  }, [productId]);
+
+  const handleToggleWish = () => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    if (!product) return;
+    const next = !isLiked;
+    setIsLiked(next);
+    (next ? addWishlist(product.productId) : removeWishlist(product.productId)).catch(() =>
+      setIsLiked(!next),
+    );
+  };
+
+  const handleAddToCart = () => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    if (!product) return;
+    addToCart({ productId: product.productId, quantity: 1 })
+      .then(() => setCartMessage('장바구니에 담았습니다'))
+      .catch(() => setCartMessage('장바구니 담기에 실패했습니다'))
+      .finally(() => setTimeout(() => setCartMessage(null), 2000));
+  };
+
+  const canWriteReview = isLoggedIn && (product?.canWriteReview ?? false);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <span className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-gray-300" />
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
+        <p className="text-body-7 text-black">상품 정보를 불러오지 못했습니다.</p>
+        <button type="button" onClick={() => navigate(-1)} className="text-body-9 text-primary-200">
+          이전으로 돌아가기
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen justify-center">
-      <div className="flex h-screen w-full max-w-120 flex-col bg-white">
+      <div className="relative flex h-screen w-full max-w-120 flex-col bg-white">
         {/* 헤더: pt=20 pb=20 */}
         <header className="relative flex shrink-0 items-center justify-center bg-white px-3 py-5">
           <button
@@ -147,14 +213,20 @@ function ProductDetailPage() {
         <main className="scrollbar-hide flex-1 overflow-y-auto">
           {/* 이미지 슬라이더: 390×390 */}
           <div className="bg-secondary-100 relative h-97.5 w-full overflow-hidden">
-            <div className="flex h-full items-center justify-center">
-              <span className="text-body-5 font-bold text-black">이미지 슬라이더</span>
-            </div>
+            {product.images.length > 0 ? (
+              <img
+                src={product.images[currentSlide]}
+                alt={product.name}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center" />
+            )}
             {/* 좋아요 버튼 */}
             <button
               type="button"
               aria-label={isLiked ? '좋아요 취소' : '좋아요'}
-              onClick={() => setIsLiked((p) => !p)}
+              onClick={handleToggleWish}
               className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm"
             >
               <Heart
@@ -164,9 +236,9 @@ function ProductDetailPage() {
             </button>
             {/* 도트 인디케이터 */}
             <div className="absolute right-0 bottom-3 left-0 flex justify-center gap-1">
-              {Array.from({ length: TOTAL_SLIDES }, (_, i) => (
+              {product.images.map((imageUrl, i) => (
                 <button
-                  key={i}
+                  key={imageUrl}
                   type="button"
                   aria-label={`이미지 ${i + 1} 보기`}
                   onClick={() => setCurrentSlide(i)}
@@ -190,7 +262,7 @@ function ProductDetailPage() {
             <div className="h-8 w-8 shrink-0 rounded bg-gray-200" />
             <div className="flex flex-col gap-0.5">
               <button type="button" className="flex items-center gap-0.5">
-                <span className="text-body-7 font-bold text-black">마크 곤잘레스</span>
+                <span className="text-body-7 font-bold text-black">{product.brand}</span>
                 <ChevronRight size={12} className="text-black" />
               </button>
               <p className="text-body-10 text-gray-300">브랜드 상품 모아보기</p>
@@ -198,15 +270,23 @@ function ProductDetailPage() {
           </div>
 
           {/* 상품명: 16px regular */}
-          <p className="text-body-6 px-3 py-1.5 text-black">
-            마크 곤잘레스 논슬립 회전 어깨뿔 방지 옷걸이, 화이트 + 그레이, 60개
-          </p>
+          <p className="text-body-6 px-3 py-1.5 text-black">{product.name}</p>
 
           {/* 가격: 할인뱃지 + 가격 + 원가 */}
           <div className="flex items-center gap-1.5 px-3 py-1.5">
-            <span className="text-body-7 shrink-0 bg-red-300 px-3 font-bold text-white">50%</span>
-            <span className="text-body-5 font-bold text-red-300">3,300원 (10g당 151원)</span>
-            <span className="text-body-10 text-gray-300">2,313원</span>
+            {product.discountRate > 0 && (
+              <span className="text-body-7 shrink-0 bg-red-300 px-3 font-bold text-white">
+                {product.discountRate}%
+              </span>
+            )}
+            <span className="text-body-5 font-bold text-red-300">
+              {product.price.toLocaleString()}원 ({product.unitPrice})
+            </span>
+            {product.originalPrice > product.price && (
+              <span className="text-body-10 text-gray-300">
+                {product.originalPrice.toLocaleString()}원
+              </span>
+            )}
           </div>
 
           {/* 구분선 */}
@@ -302,12 +382,12 @@ function ProductDetailPage() {
             <h2 className="text-body-5 font-bold text-black">상품정보</h2>
           </div>
           <div className="h-2 bg-gray-100" />
-          <div className="bg-primary-100 flex h-94.75 items-center justify-center">
-            <span className="text-body-5 font-bold text-black">이미지 1</span>
-          </div>
-          <div className="bg-primary-100 flex h-94.75 items-center justify-center">
-            <span className="text-body-5 font-bold text-black">이미지 2</span>
-          </div>
+          <p className="text-body-10 px-3 py-2 whitespace-pre-wrap text-black">
+            {product.description}
+          </p>
+          {product.detailImages.map((imageUrl) => (
+            <img key={imageUrl} src={imageUrl} alt="" loading="lazy" className="w-full" />
+          ))}
 
           {/* 구분선 */}
           <div className="h-2 bg-gray-100" />
@@ -331,12 +411,18 @@ function ProductDetailPage() {
             </p>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <StarGroup rating={4.5} size={16} />
-                <span className="text-body-7 font-bold text-black">1,345</span>
+                <StarGroup rating={product.reviewSummary.averageRating} size={16} />
+                <span className="text-body-7 font-bold text-black">
+                  {product.reviewSummary.reviewCount.toLocaleString()}
+                </span>
               </div>
               <button
                 type="button"
-                className="text-body-9 text-primary-200 flex items-center gap-1 font-semibold"
+                disabled={isLoggedIn && !canWriteReview}
+                onClick={() => {
+                  if (!isLoggedIn) navigate('/login');
+                }}
+                className="text-body-9 text-primary-200 flex items-center gap-1 font-semibold disabled:text-gray-200"
               >
                 <Pencil size={12} />
                 리뷰 작성하기
@@ -369,8 +455,8 @@ function ProductDetailPage() {
             </div>
           </div>
 
-          {/* 리뷰 아이템 2개 */}
-          {REVIEWS.map((review) => (
+          {/* 리뷰 아이템 */}
+          {reviews.map((review) => (
             <ReviewItem key={review.id} review={review} />
           ))}
 
@@ -388,10 +474,18 @@ function ProductDetailPage() {
           <div className="h-16.75" />
         </main>
 
+        {/* 장바구니 담기 결과 토스트 */}
+        {cartMessage && (
+          <div className="absolute top-18 left-1/2 z-30 w-max -translate-x-1/2 rounded-lg bg-white px-4 py-3 shadow-[4px_4px_12px_0px_rgba(0,0,0,0.2)]">
+            <p className="text-body-9 whitespace-nowrap text-black">{cartMessage}</p>
+          </div>
+        )}
+
         {/* 하단 액션 바: h=67, px=12, py=12 */}
         <div className="flex shrink-0 items-center gap-2 border-t border-gray-200 px-3 py-3">
           <button
             type="button"
+            onClick={handleAddToCart}
             className="text-body-5 border-primary-200 text-primary-200 flex-1 rounded border py-3 font-bold"
           >
             장바구니 담기
