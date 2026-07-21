@@ -14,6 +14,9 @@ async function loginThenGoTo(page: import('@playwright/test').Page, navLabel: st
   await page.route('**/api/banners', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
   );
+  await page.route('**/api/users/recent-products', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: '{"items":[]}' }),
+  );
 
   await page.goto('/login');
   await page.fill('input[type="email"]', 'user@example.com');

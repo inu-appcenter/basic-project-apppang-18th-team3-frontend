@@ -31,7 +31,23 @@ curl -s -o /dev/null -w "status=%{http_code}\n" "https://apppang.shop/api/produc
 상품이 하나도 없는 현재 DB 상태에서는 **모든 productId 조회가 500**이 된다. 프론트는 이 경우를 "상품 정보를
 불러오지 못했습니다" 에러 화면으로 처리해 뒀지만, 정상 케이스(존재하는 id)는 검증하지 못했다.
 
-### 1.3 `POST /api/cart`, `POST /api/wishlist`가 모두 409 "이미 가입된 이메일입니다" 반환
+### 1.3 `GET /api/banners`가 인증 없이 401을 반환
+
+```bash
+curl -s -o /dev/null -w "status=%{http_code}\n" "https://apppang.shop/api/banners"
+# status=401
+```
+
+배너는 비로그인 사용자에게도 보여야 하는 공개 마케팅 콘텐츠인데 인증을 요구한다. 이 때문에
+비로그인 상태로 메인 페이지에 진입하면 배너 조회가 401을 반환했고, `src/api/instance.ts`의
+응답 인터셉터가 모든 401에 대해 무조건 `accessToken` 삭제 + `/login`으로 강제 이동시키던
+버그와 겹쳐 **비로그인 사용자가 메인 페이지에 들어가자마자 로그인 페이지로 튕기는** 심각한
+프론트 버그로 이어졌다. 인터셉터는 "토큰이 있었는데 401이 온 경우(세션 만료)"에만 강제
+로그아웃하도록 수정했다(토큰 없이 401을 받은 공개 페이지의 부가 데이터 조회는 호출부의
+`catch`가 조용히 처리). 백엔드의 `GET /api/banners` 인증 요구 자체는 프론트에서 고칠 수
+없는 별도 버그로 남아있다.
+
+### 1.4 `POST /api/cart`, `POST /api/wishlist`가 모두 409 "이미 가입된 이메일입니다" 반환
 
 ```bash
 curl -s -X POST "https://apppang.shop/api/cart" -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
@@ -79,29 +95,24 @@ curl -s -X POST "https://apppang.shop/api/wishlist" -H "Authorization: Bearer <t
 
 ## 4. 프론트엔드 자체 이슈 (이번 작업 중 발견, 백엔드와 무관)
 
-### 4.1 로그인 상태가 새로고침/앱 재시작 시 유지되지 않음
+### 4.1 (해결됨) 로그인 상태가 새로고침/앱 재시작 시 유지되지 않던 문제
 
-`src/store/authStore.ts`의 `isLoggedIn`은 인메모리 상태로, 로그인 성공 시에만 `true`가 된다.
-`localStorage`의 `accessToken`을 앱 부팅 시 재검증해서 자동으로 `isLoggedIn`을 복원하는 로직이 없다.
-
-`docs/requirements.md` 1.3 "JWT 정책"엔 "앱 재실행 시 자동 로그인 (토큰 유효성 검사 후 메인 이동)"이 명시돼
-있는데 현재 미구현이다. 실제로는 로그인 직후 세션 안에서 클라이언트 사이드 라우팅으로 이동하는 동안엔
-문제없이 동작하지만(예: `NavigationBar`로 `/cart`, `/mypage` 이동 — `e2e/authenticated-pages.spec.ts`에서
-검증), 브라우저를 새로고침하면 `accessToken`이 남아있어도 `isLoggedIn`이 `false`로 리셋된다. 이번 스코프엔
-포함하지 않았지만 별도로 처리가 필요하다 (예: `App.tsx` 최상단에서 `accessToken` 존재 시 `/api/users/me` 호출로
-재검증 후 `setAuth` 복원).
+`docs/requirements.md` 1.3 "JWT 정책"의 "앱 재실행 시 자동 로그인" 요구사항대로, `App.tsx` 최상단에서
+`accessToken` 존재 시 `GET /api/users/me`로 재검증 후 `setAuth`로 복원하도록 수정 완료.
 
 ## 5. 실제로 연결한 것 요약
 
 | 페이지 | 연결한 API |
 |---|---|
-| 메인 | `GET /api/banners` |
+| 메인 | `GET /api/banners`, `GET /api/users/recent-products` (로그인 시, 최근 찾던 상품의 연관 상품) |
 | 검색 | `GET /api/search/suggestions`, `GET/POST/DELETE /api/search/history` (로그인 시), localStorage (비로그인) |
 | 챗봇 | `GET /api/chat/history`, `POST /api/chat` |
 | 상품 리스트 | `GET /api/products` (+ 무한스크롤, 정렬) |
 | 상품 상세 | `GET /api/products/:id`, `GET /api/products/:id/reviews`, `POST/DELETE /api/wishlist`, `POST /api/cart` |
 | 장바구니 | `GET /api/cart`, `PATCH /api/cart/:id`, `DELETE /api/cart/:id` |
-| 마이페이지 | `GET /api/users/me`, `GET /api/orders`, `POST /api/auth/logout` |
+| 마이페이지 | `GET /api/users/me`, `PATCH /api/users/me`, `PATCH /api/users/me/password`, `GET /api/orders`, `GET /api/users/recent-products`, `POST /api/auth/logout` |
+| 배송지 관리/입력/선택 | `GET/POST/PATCH/DELETE /api/addresses` |
+| 주문내역/주문상세/주문·결제 | `GET /api/orders`, `GET /api/orders/:id`, `POST /api/orders`, `POST /api/orders/estimate` |
 
 로그인/회원가입(`POST /api/auth/login`, `POST /api/auth/signup`, `GET /api/auth/check-email`)은 이전 작업에서
 이미 연동 완료.

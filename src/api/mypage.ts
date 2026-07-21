@@ -1,6 +1,7 @@
 import instance from '@/api/instance';
 import type {
   OrderSummaryResponse,
+  RecentProductsResponse,
   UpdateMeRequest,
   UpdateMeResponse,
   UpdatePasswordRequest,
@@ -26,4 +27,9 @@ export const updateMe = async (payload: UpdateMeRequest) => {
 export const updatePassword = async (payload: UpdatePasswordRequest) => {
   const { data } = await instance.patch<UpdatePasswordResponse>('/api/users/me/password', payload);
   return data;
+};
+
+export const getRecentProducts = async () => {
+  const { data } = await instance.get<RecentProductsResponse>('/api/users/recent-products');
+  return data.items;
 };

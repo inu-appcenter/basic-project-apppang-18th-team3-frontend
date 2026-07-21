@@ -10,25 +10,16 @@ import {
   Rocket,
   Search,
   Shirt,
-  Star,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { getBanners } from '@/api/banner';
+import RecentProductsSection from '@/components/RecentProductsSection';
 import type { BannerResponse } from '@/types/banner';
 
 // ─── Types ────────────────────────────────────────────────
 type Category = { id: number; label: string; path: string; icon: ReactNode };
-
-type ProductCard = {
-  id: number;
-  price: number;
-  originalPrice?: number;
-  rating: number;
-  reviewCount: number;
-  isRocket: boolean;
-};
 
 // ─── Constants ────────────────────────────────────────────
 const CATEGORIES: Category[] = [
@@ -94,98 +85,6 @@ const CATEGORIES: Category[] = [
   },
 ];
 
-const DUMMY_PRODUCTS: ProductCard[] = [
-  { id: 1, price: 58380, rating: 4.8, reviewCount: 31387, isRocket: true },
-  { id: 2, price: 58380, originalPrice: 70000, rating: 4.8, reviewCount: 31387, isRocket: true },
-  { id: 3, price: 58380, rating: 4.8, reviewCount: 31387, isRocket: false },
-  { id: 4, price: 58380, originalPrice: 70000, rating: 4.8, reviewCount: 31387, isRocket: false },
-  { id: 5, price: 58380, rating: 4.8, reviewCount: 31387, isRocket: true },
-  { id: 6, price: 58380, originalPrice: 70000, rating: 4.8, reviewCount: 31387, isRocket: true },
-  { id: 7, price: 58380, rating: 4.8, reviewCount: 31387, isRocket: false },
-  { id: 8, price: 58380, originalPrice: 70000, rating: 4.8, reviewCount: 31387, isRocket: false },
-];
-
-function chunkPairs<T>(arr: T[]): T[][] {
-  const pairs: T[][] = [];
-  for (let i = 0; i < arr.length; i += 2) {
-    pairs.push(arr.slice(i, i + 2));
-  }
-  return pairs;
-}
-
-// ─── Sub-components ───────────────────────────────────────
-function StarRow({ rating, reviewCount }: { rating: number; reviewCount: number }) {
-  return (
-    <div className="flex items-end gap-0.5">
-      <div className="flex items-center">
-        {Array.from({ length: 5 }, (_, i) => (
-          <Star
-            key={i}
-            size={12}
-            className={
-              i < Math.round(rating)
-                ? 'fill-yellow-300 text-yellow-300'
-                : 'fill-gray-200 text-gray-200'
-            }
-          />
-        ))}
-      </div>
-      <span className="text-[10px] leading-none text-gray-300">
-        ({reviewCount.toLocaleString()})
-      </span>
-    </div>
-  );
-}
-
-function RocketBadge() {
-  return (
-    <div className="flex items-center gap-1">
-      <div className="flex items-center gap-0.5">
-        <Rocket size={12} className="text-secondary-300" />
-        <span className="text-secondary-300 text-[10px] leading-none font-semibold">로켓</span>
-      </div>
-      <span className="text-secondary-200 text-[9px] leading-none font-semibold">내일도착</span>
-    </div>
-  );
-}
-
-function FreeShippingBadge() {
-  return (
-    <div className="bg-secondary-100 inline-flex items-center rounded-xs px-1 py-0.5">
-      <span className="text-[10px] leading-none font-semibold text-black">무료배송</span>
-    </div>
-  );
-}
-
-function ProductCardItem({ product }: { product: ProductCard }) {
-  const navigate = useNavigate();
-
-  return (
-    <button
-      type="button"
-      onClick={() => navigate(`/products/${product.id}`)}
-      className="flex w-25 shrink-0 flex-col gap-1 text-left"
-    >
-      <div className="h-25 w-25 bg-gray-200" />
-      {product.originalPrice && (
-        <div className="flex items-center gap-1">
-          <div className="h-3 w-3 rounded-sm bg-gray-200" />
-          <span className="text-body-9 font-semibold text-red-300">
-            {product.price.toLocaleString()}원
-          </span>
-        </div>
-      )}
-      {!product.originalPrice && (
-        <span className="text-body-9 font-semibold text-black">
-          {product.price.toLocaleString()}원
-        </span>
-      )}
-      {product.isRocket ? <RocketBadge /> : <FreeShippingBadge />}
-      <StarRow rating={product.rating} reviewCount={product.reviewCount} />
-    </button>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────
 function MainPage() {
   const navigate = useNavigate();
@@ -220,8 +119,6 @@ function MainPage() {
       );
     }
   };
-
-  const productPairs = chunkPairs(DUMMY_PRODUCTS);
 
   return (
     <div className="flex flex-col gap-3 pb-4">
@@ -296,24 +193,7 @@ function MainPage() {
         ))}
       </div>
 
-      {/* 최근 찾던 상품의 연관 상품 */}
-      <div className="flex flex-col gap-3 px-3 pt-1">
-        <h2 className="text-body-7 font-bold text-black">최근 찾던 상품의 연관 상품</h2>
-
-        {/* 가로 스크롤: 2개씩 세로 컬럼 쌍 */}
-        <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-2">
-          {productPairs.map((pair) => (
-            <div
-              key={pair.map((product) => product.id).join('-')}
-              className="flex shrink-0 flex-col gap-2.5"
-            >
-              {pair.map((product) => (
-                <ProductCardItem key={product.id} product={product} />
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
+      <RecentProductsSection />
     </div>
   );
 }

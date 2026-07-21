@@ -65,6 +65,12 @@ test.describe('회원가입 페이지', () => {
         body: JSON.stringify({ token: 'test-token', user: { userId: 1, name: '테스트' } }),
       }),
     );
+    await page.route('**/api/banners', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
+    );
+    await page.route('**/api/users/recent-products', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '{"items":[]}' }),
+    );
 
     await page.goto('/register');
     await page.fill('input[type="email"]', 'new@example.com');

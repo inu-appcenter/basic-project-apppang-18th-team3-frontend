@@ -6,7 +6,6 @@ import {
   ReceiptText,
   Rocket,
   Settings,
-  Star,
   User,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -15,6 +14,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { logout } from '@/api/auth';
 import { getMe, getOrders } from '@/api/mypage';
+import RecentProductsSection from '@/components/RecentProductsSection';
 import { useAuthStore } from '@/store/authStore';
 import type { OrderSummaryResponse, UserMeResponse } from '@/types/mypage';
 
@@ -37,16 +37,6 @@ function toOrder(res: OrderSummaryResponse): Order {
   return { id: res.orderId, status, hasRocket: false };
 }
 
-type RelatedProduct = {
-  id: number;
-  price: number;
-  originalPrice?: number;
-  discountRate?: number;
-  rating: number;
-  reviewCount: number;
-  hasRocket: boolean;
-};
-
 type QuickMenu = {
   label: string;
   path: string;
@@ -54,49 +44,6 @@ type QuickMenu = {
 };
 
 // ─── Constants ────────────────────────────────────────────
-const RELATED_PRODUCTS: RelatedProduct[] = [
-  { id: 1, price: 58380, rating: 4.8, reviewCount: 31387, hasRocket: true },
-  {
-    id: 2,
-    price: 58380,
-    originalPrice: 70000,
-    discountRate: 17,
-    rating: 4.5,
-    reviewCount: 12345,
-    hasRocket: true,
-  },
-  { id: 3, price: 58380, rating: 4.8, reviewCount: 31387, hasRocket: false },
-  {
-    id: 4,
-    price: 58380,
-    originalPrice: 70000,
-    discountRate: 17,
-    rating: 4.5,
-    reviewCount: 12345,
-    hasRocket: false,
-  },
-  { id: 5, price: 58380, rating: 4.8, reviewCount: 31387, hasRocket: true },
-  {
-    id: 6,
-    price: 58380,
-    originalPrice: 70000,
-    discountRate: 17,
-    rating: 4.5,
-    reviewCount: 12345,
-    hasRocket: true,
-  },
-  { id: 7, price: 58380, rating: 4.8, reviewCount: 31387, hasRocket: false },
-  {
-    id: 8,
-    price: 58380,
-    originalPrice: 70000,
-    discountRate: 17,
-    rating: 4.5,
-    reviewCount: 12345,
-    hasRocket: false,
-  },
-];
-
 const QUICK_MENUS: QuickMenu[] = [
   { label: '주문내역', path: '/mypage/orders', icon: <ReceiptText size={24} /> },
   { label: '찜리스트', path: '/mypage/wishlist', icon: <Heart size={24} /> },
@@ -117,29 +64,6 @@ function maskName(name: string): string {
 }
 
 // ─── Sub-components ───────────────────────────────────────
-function StarRow({ rating, reviewCount }: { rating: number; reviewCount: number }) {
-  return (
-    <div className="flex items-end gap-0.5">
-      <div className="flex items-center">
-        {Array.from({ length: 5 }, (_, i) => (
-          <Star
-            key={i}
-            size={10}
-            className={
-              i < Math.round(rating)
-                ? 'fill-yellow-300 text-yellow-300'
-                : 'fill-gray-200 text-gray-200'
-            }
-          />
-        ))}
-      </div>
-      <span className="text-[10px] leading-none text-gray-300">
-        ({reviewCount.toLocaleString()})
-      </span>
-    </div>
-  );
-}
-
 function OrderCard({ order }: { order: Order }) {
   return (
     <div className="flex h-[154px] w-[124px] shrink-0 flex-col gap-1 rounded-lg border border-gray-200 bg-white p-2">
@@ -157,29 +81,6 @@ function OrderCard({ order }: { order: Order }) {
           <PackagePlus size={14} className="text-gray-300" />
         </div>
       </div>
-    </div>
-  );
-}
-
-function RelatedProductCard({ product }: { product: RelatedProduct }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="h-25 w-25 bg-gray-200" />
-      {product.originalPrice && product.discountRate && (
-        <div className="flex items-center gap-1">
-          <span className="text-body-11 font-semibold text-red-300">{product.discountRate}%</span>
-          <span className="text-body-11 text-gray-300 line-through">
-            {product.originalPrice.toLocaleString()}원
-          </span>
-        </div>
-      )}
-      <span className="text-body-9 font-bold text-black">{product.price.toLocaleString()}원</span>
-      {product.hasRocket ? (
-        <span className="text-body-11 text-secondary-300 font-semibold">로켓 · 내일도착</span>
-      ) : (
-        <span className="text-body-11 text-black">무료배송</span>
-      )}
-      <StarRow rating={product.rating} reviewCount={product.reviewCount} />
     </div>
   );
 }
@@ -323,21 +224,7 @@ function MyPage() {
       {/* 8px 구분 */}
       <div className="h-2 bg-gray-100" />
 
-      {/* 연관 상품 — White 카드 */}
-      <div className="flex flex-col gap-4 bg-white px-3 py-3">
-        <div className="flex items-center justify-between">
-          <span className="text-body-1 text-black">최근 찾던 상품의 연관 상품</span>
-          <span className="text-body-10 text-gray-300">광고</span>
-        </div>
-        <div className="scrollbar-hide flex gap-3 overflow-x-auto">
-          {Array.from({ length: 4 }, (_, colIdx) => (
-            <div key={colIdx} className="flex shrink-0 flex-col gap-2.5">
-              <RelatedProductCard product={RELATED_PRODUCTS[colIdx * 2]} />
-              <RelatedProductCard product={RELATED_PRODUCTS[colIdx * 2 + 1]} />
-            </div>
-          ))}
-        </div>
-      </div>
+      <RecentProductsSection showAdLabel />
 
       {/* 하단 링크 */}
       <div className="flex items-center justify-center gap-6 py-4">

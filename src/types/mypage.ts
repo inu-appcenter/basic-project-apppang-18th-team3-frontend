@@ -45,3 +45,14 @@ export interface UpdatePasswordRequest {
 export interface UpdatePasswordResponse {
   message: string;
 }
+
+export interface RecentProductItem {
+  productId: number;
+  name: string;
+  imageUrl: string;
+  price: number;
+}
+
+export interface RecentProductsResponse {
+  items: RecentProductItem[];
+}

@@ -26,6 +26,12 @@ test.describe('로그인 페이지', () => {
         body: JSON.stringify({ token: 'test-token', user: { userId: 1, name: '테스트' } }),
       }),
     );
+    await page.route('**/api/banners', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
+    );
+    await page.route('**/api/users/recent-products', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: '{"items":[]}' }),
+    );
 
     await page.goto('/login');
     await page.fill('input[type="email"]', 'user@example.com');
