@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { deleteCartItem, getCart, updateCartQuantity } from '@/api/cart';
 import CheckBox from '@/components/CheckBox';
+import { useCheckoutStore } from '@/store/checkoutStore';
 import type { CartItemResponse } from '@/types/cart';
 
 // ─── Types ────────────────────────────────────────────────
@@ -240,6 +241,7 @@ function ConfirmDeleteModal({
 // ─── Page ─────────────────────────────────────────────────
 function CartPage() {
   const navigate = useNavigate();
+  const setCheckoutItems = useCheckoutStore((state) => state.setItems);
 
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
   const [items, setItems] = useState<CartItem[]>([]);
@@ -343,6 +345,18 @@ function CartPage() {
   const totalCount = checkedItems.reduce((sum, item) => sum + item.quantity, 0);
   const shippingFee = 0;
   const totalPrice = totalProductPrice + shippingFee;
+
+  const handleBuyNow = () => {
+    setCheckoutItems(
+      checkedItems.map((item) => ({
+        productId: item.productId,
+        productName: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+    );
+    navigate('/checkout');
+  };
 
   return (
     <div className="flex min-h-screen justify-center">
@@ -479,10 +493,10 @@ function CartPage() {
                 </button>
               </div>
 
-              {/* 구매 버튼: 주문/결제 페이지가 아직 없어(요구사항 범위 밖) 이동 없이 비활성화 조건만 반영 */}
               <button
                 type="button"
                 disabled={totalCount === 0}
+                onClick={handleBuyNow}
                 className="text-body-5 bg-primary-200 w-full py-4 font-bold text-white disabled:bg-gray-200"
               >
                 총 {totalCount}개 상품 구매하기

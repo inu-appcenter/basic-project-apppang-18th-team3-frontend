@@ -16,6 +16,7 @@ import { addToCart } from '@/api/cart';
 import { getProduct, getReviews } from '@/api/product';
 import { addWishlist, removeWishlist } from '@/api/wishlist';
 import { useAuthStore } from '@/store/authStore';
+import { useCheckoutStore } from '@/store/checkoutStore';
 import type { ProductDetailResponse, ReviewItemResponse } from '@/types/product';
 
 // ─── Types ────────────────────────────────────────────────
@@ -121,6 +122,7 @@ function ProductDetailPage() {
   const navigate = useNavigate();
   const { productId } = useParams<{ productId: string }>();
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const setCheckoutItems = useCheckoutStore((state) => state.setItems);
 
   const [product, setProduct] = useState<ProductDetailResponse | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -170,6 +172,23 @@ function ProductDetailPage() {
       .then(() => setCartMessage('장바구니에 담았습니다'))
       .catch(() => setCartMessage('장바구니 담기에 실패했습니다'))
       .finally(() => setTimeout(() => setCartMessage(null), 2000));
+  };
+
+  const handleBuyNow = () => {
+    if (!isLoggedIn) {
+      navigate('/login');
+      return;
+    }
+    if (!product) return;
+    setCheckoutItems([
+      {
+        productId: product.productId,
+        productName: product.name,
+        price: product.price,
+        quantity: 1,
+      },
+    ]);
+    navigate('/checkout');
   };
 
   const canWriteReview = isLoggedIn && (product?.canWriteReview ?? false);
@@ -492,6 +511,7 @@ function ProductDetailPage() {
           </button>
           <button
             type="button"
+            onClick={handleBuyNow}
             className="text-body-5 bg-primary-200 flex-1 rounded py-3 font-bold text-white"
           >
             바로구매

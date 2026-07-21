@@ -8,12 +8,16 @@ import AuthLayout from '@/layouts/AuthLayout';
 import CommonLayout from '@/layouts/CommonLayout';
 import AddressFormPage from '@/pages/AddressFormPage';
 import AddressListPage from '@/pages/AddressListPage';
+import AddressSelectPage from '@/pages/AddressSelectPage';
 import CartPage from '@/pages/CartPage';
 import ChatbotPage from '@/pages/ChatbotPage';
+import CheckoutPage from '@/pages/CheckoutPage';
 import LoginPage from '@/pages/LoginPage';
 import MainPage from '@/pages/MainPage';
 import MyPage from '@/pages/MyPage';
 import NotFoundPage from '@/pages/NotFoundPage';
+import OrderDetailPage from '@/pages/OrderDetailPage';
+import OrderListPage from '@/pages/OrderListPage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
 import ProductListPage from '@/pages/ProductListPage';
 import RegisterPage from '@/pages/RegisterPage';
@@ -52,6 +56,10 @@ function App() {
         <Route path="/mypage/addresses" element={<AddressListPage />} />
         <Route path="/mypage/addresses/new" element={<AddressFormPage />} />
         <Route path="/mypage/addresses/:addressId/edit" element={<AddressFormPage />} />
+        <Route path="/mypage/orders" element={<OrderListPage />} />
+        <Route path="/mypage/orders/:orderId" element={<OrderDetailPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/checkout/address" element={<AddressSelectPage />} />
 
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
