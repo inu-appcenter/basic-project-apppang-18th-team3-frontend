@@ -265,7 +265,7 @@ function AddressFormPage() {
 
   return (
     <div className="flex min-h-screen justify-center">
-      <div className="relative flex min-h-screen w-full max-w-120 flex-col bg-white">
+      <div className="relative flex h-screen w-full max-w-120 flex-col bg-white">
         <div className="flex shrink-0 items-center justify-center px-3 py-5">
           <button
             type="button"
@@ -278,7 +278,7 @@ function AddressFormPage() {
           <h1 className="text-body-2 font-bold text-black">배송지 입력</h1>
         </div>
 
-        <div className="flex flex-col items-center gap-4.5 px-2.5 pb-6">
+        <div className="flex flex-1 flex-col items-center gap-4.5 overflow-y-auto px-2.5 pb-6">
           <IconField
             icon={<User size={20} className="text-gray-300" />}
             placeholder="받는 사람"

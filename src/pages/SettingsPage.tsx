@@ -230,7 +230,7 @@ function SettingsPage() {
 
   return (
     <div className="flex min-h-screen justify-center">
-      <div className="relative flex min-h-screen w-full max-w-120 flex-col bg-white">
+      <div className="relative flex h-screen w-full max-w-120 flex-col bg-white">
         {/* Header */}
         <div className="flex shrink-0 items-center gap-3 px-3 pt-3.5">
           <button type="button" onClick={() => navigate(-1)} aria-label="뒤로 가기">
@@ -239,7 +239,7 @@ function SettingsPage() {
           <h1 className="text-title-5 text-black">내정보관리</h1>
         </div>
 
-        <div className="pt-4.5">
+        <div className="flex-1 overflow-y-auto pt-4.5">
           <div className="flex w-full flex-col items-center gap-5 bg-gray-100 px-2.5 py-5">
             <div className="flex w-full max-w-81.75 flex-col gap-11.75">
               <button
