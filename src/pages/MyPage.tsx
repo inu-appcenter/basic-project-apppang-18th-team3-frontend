@@ -1,12 +1,11 @@
 import {
   ChevronRight,
   Heart,
-  LayoutGrid,
+  MapPin,
   PackagePlus,
   ReceiptText,
-  RefreshCcw,
+  Rocket,
   Settings,
-  ShoppingBag,
   Star,
   User,
 } from 'lucide-react';
@@ -101,9 +100,7 @@ const RELATED_PRODUCTS: RelatedProduct[] = [
 const QUICK_MENUS: QuickMenu[] = [
   { label: '주문내역', path: '/mypage/orders', icon: <ReceiptText size={24} /> },
   { label: '찜리스트', path: '/mypage/wishlist', icon: <Heart size={24} /> },
-  { label: '최근본상품', path: '/mypage/recent', icon: <ShoppingBag size={24} /> },
-  { label: '자주산상품', path: '/mypage/frequent', icon: <RefreshCcw size={24} /> },
-  { label: '전체메뉴', path: '/mypage/menu', icon: <LayoutGrid size={24} /> },
+  { label: '배송지 관리', path: '/mypage/addresses', icon: <MapPin size={24} /> },
 ];
 
 const STATUS_COLOR: Record<OrderStatus, string> = {
@@ -147,7 +144,11 @@ function OrderCard({ order }: { order: Order }) {
   return (
     <div className="flex h-[154px] w-[124px] shrink-0 flex-col gap-1 rounded-lg border border-gray-200 bg-white p-2">
       {order.hasRocket && (
-        <span className="text-body-9 text-secondary-300 font-semibold">로켓</span>
+        <div className="flex items-center gap-0.5">
+          <Rocket size={12} className="text-secondary-300" />
+          <span className="text-secondary-300 text-[10px] leading-none font-semibold">로켓</span>
+          <span className="text-secondary-300 text-[10px] leading-none font-semibold">내일</span>
+        </div>
       )}
       <span className={`text-body-10 ${STATUS_COLOR[order.status]}`}>{order.status}</span>
       <div className="relative mt-auto">
@@ -279,7 +280,7 @@ function MyPage() {
       </div>
 
       {/* 퀵 메뉴 — White */}
-      <div className="flex justify-between bg-white px-6 py-3">
+      <div className="flex justify-center gap-8 bg-white px-6 py-3">
         {QUICK_MENUS.map((menu) => (
           <button
             key={menu.path}
