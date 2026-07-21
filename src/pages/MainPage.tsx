@@ -10,7 +10,6 @@ import {
   Rocket,
   Search,
   Shirt,
-  ShoppingBag,
   Star,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -35,62 +34,62 @@ type ProductCard = {
 const CATEGORIES: Category[] = [
   {
     id: 1,
-    label: '자주산상품',
-    path: '/products?category=frequent',
-    icon: <ShoppingBag size={36} strokeWidth={1.5} />,
+    label: '식품',
+    path: '/products?category=식품',
+    icon: <Pizza size={36} strokeWidth={1.5} />,
   },
   {
     id: 2,
-    label: '쿠팡플레이',
-    path: '/products?category=play',
+    label: '생활용품',
+    path: '/products?category=생활용품',
     icon: <Popcorn size={36} strokeWidth={1.5} />,
   },
   {
     id: 3,
-    label: '로켓프레시',
-    path: '/products?category=fresh',
+    label: '뷰티',
+    path: '/products?category=뷰티',
     icon: <Milk size={36} strokeWidth={1.5} />,
   },
   {
     id: 4,
-    label: '쿠팡이츠',
-    path: '/products?category=eats',
-    icon: <Pizza size={36} strokeWidth={1.5} />,
+    label: '의류·잡화',
+    path: '/products?category=의류·잡화',
+    icon: <Shirt size={36} strokeWidth={1.5} />,
   },
   {
     id: 5,
-    label: '골드박스',
-    path: '/products?category=goldbox',
+    label: '가전·디지털',
+    path: '/products?category=가전·디지털',
     icon: <Gift size={36} strokeWidth={1.5} />,
   },
   {
     id: 6,
-    label: '반짝세일',
-    path: '/products?category=flash',
+    label: '홈인테리어',
+    path: '/products?category=홈인테리어',
     icon: <Clock7 size={36} strokeWidth={1.5} />,
   },
   {
     id: 7,
-    label: '패션/잡화',
-    path: '/products?category=fashion',
+    label: '출산·유아',
+    path: '/products?category=출산·유아',
     icon: <Shirt size={36} strokeWidth={1.5} />,
   },
   {
     id: 8,
-    label: 'R.LUX',
-    path: '/products?category=luxury',
+    label: '반려동물',
+    path: '/products?category=반려동물',
     icon: <HandPlatter size={36} strokeWidth={1.5} />,
   },
   {
     id: 9,
-    label: '로켓배송',
-    path: '/products?category=rocket',
+    label: '스포츠·레저',
+    path: '/products?category=스포츠·레저',
     icon: <Rocket size={36} strokeWidth={1.5} />,
   },
   {
     id: 10,
-    label: '로켓직구',
-    path: '/products?category=global',
+    label: '자동차용품',
+    path: '/products?category=자동차용품',
     icon: <Rocket size={36} strokeWidth={1.5} />,
   },
 ];
@@ -303,8 +302,11 @@ function MainPage() {
 
         {/* 가로 스크롤: 2개씩 세로 컬럼 쌍 */}
         <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-2">
-          {productPairs.map((pair, colIdx) => (
-            <div key={colIdx} className="flex shrink-0 flex-col gap-2.5">
+          {productPairs.map((pair) => (
+            <div
+              key={pair.map((product) => product.id).join('-')}
+              className="flex shrink-0 flex-col gap-2.5"
+            >
               {pair.map((product) => (
                 <ProductCardItem key={product.id} product={product} />
               ))}
