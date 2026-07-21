@@ -1,4 +1,4 @@
-import { ChevronLeft, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -239,9 +239,18 @@ function SettingsPage() {
           <h1 className="text-title-5 text-black">내정보관리</h1>
         </div>
 
-        <div className="flex-1 pt-4.5">
+        <div className="pt-4.5">
           <div className="flex w-full flex-col items-center gap-5 bg-gray-100 px-2.5 py-5">
             <div className="flex w-full max-w-81.75 flex-col gap-11.75">
+              <button
+                type="button"
+                onClick={() => navigate('/mypage/addresses')}
+                className="text-body-7 flex w-full items-center justify-between border border-gray-200 bg-white px-4 py-3 font-bold text-black"
+              >
+                배송지 관리
+                <ChevronRight size={18} className="text-gray-300" />
+              </button>
+
               {/* 기본정보 */}
               <div className="flex flex-col gap-5.5">
                 <SectionDivider label="기본정보" />

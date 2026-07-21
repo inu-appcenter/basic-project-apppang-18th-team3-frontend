@@ -6,6 +6,8 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { getMe } from '@/api/mypage';
 import AuthLayout from '@/layouts/AuthLayout';
 import CommonLayout from '@/layouts/CommonLayout';
+import AddressFormPage from '@/pages/AddressFormPage';
+import AddressListPage from '@/pages/AddressListPage';
 import CartPage from '@/pages/CartPage';
 import ChatbotPage from '@/pages/ChatbotPage';
 import LoginPage from '@/pages/LoginPage';
@@ -47,6 +49,9 @@ function App() {
         <Route path="/products/:productId" element={<ProductDetailPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/mypage/addresses" element={<AddressListPage />} />
+        <Route path="/mypage/addresses/new" element={<AddressFormPage />} />
+        <Route path="/mypage/addresses/:addressId/edit" element={<AddressFormPage />} />
 
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
