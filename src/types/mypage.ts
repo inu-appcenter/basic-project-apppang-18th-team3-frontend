@@ -23,3 +23,25 @@ export interface OrderSummaryResponse {
   totalPrice: number;
   items: OrderItemInfo[];
 }
+
+export interface UpdateMeRequest {
+  email?: string;
+  name?: string;
+  phoneNumber?: string;
+}
+
+export interface UpdateMeResponse {
+  userId: number;
+  email: string;
+  name: string;
+  phoneNumber: string;
+}
+
+export interface UpdatePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface UpdatePasswordResponse {
+  message: string;
+}

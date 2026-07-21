@@ -18,7 +18,8 @@ function LoginPage() {
 
   const isActive = email.length > 0 && password.length > 0;
 
-  const handleLogin = async () => {
+  const handleLogin = async (e: React.SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (!isActive || isLoading) return;
     setIsLoading(true);
     setLoginError(false);
@@ -48,7 +49,7 @@ function LoginPage() {
       </div>
 
       {/* Form */}
-      <div className="flex flex-col gap-3">
+      <form onSubmit={handleLogin} className="flex flex-col gap-3">
         {/* Email Field */}
         <div
           className={`flex items-center gap-2 border px-4 py-3.5 transition-colors ${
@@ -102,23 +103,22 @@ function LoginPage() {
             )}
           </button>
         </div>
-      </div>
 
-      {/* Login Button */}
-      <button
-        type="button"
-        disabled={!isActive || isLoading}
-        onClick={handleLogin}
-        className={`text-body-5 mt-3 flex w-full items-center justify-center py-3.5 text-white transition-colors ${
-          isActive && !isLoading ? 'bg-primary-200' : 'bg-gray-200'
-        }`}
-      >
-        {isLoading ? (
-          <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-        ) : (
-          '로그인'
-        )}
-      </button>
+        {/* Login Button */}
+        <button
+          type="submit"
+          disabled={!isActive || isLoading}
+          className={`text-body-5 flex w-full items-center justify-center py-3.5 text-white transition-colors ${
+            isActive && !isLoading ? 'bg-primary-200' : 'bg-gray-200'
+          }`}
+        >
+          {isLoading ? (
+            <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+          ) : (
+            '로그인'
+          )}
+        </button>
+      </form>
 
       {/* Find Account */}
       <div className="mt-3 flex justify-end">
