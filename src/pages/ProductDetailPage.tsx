@@ -133,9 +133,15 @@ function ProductDetailPage() {
     if (!productId) return;
     setIsLoading(true);
     setError(false);
+
     Promise.all([getProduct(productId), getReviews(productId, { page: 1 })])
       .then(([productRes, reviewsRes]) => {
-        setProduct(productRes);
+        // 백엔드가 images/detailImages를 null로 내려줄 때가 있어 빈 배열로 보정한다.
+        setProduct({
+          ...productRes,
+          images: productRes.images ?? [],
+          detailImages: productRes.detailImages ?? [],
+        });
         setIsLiked(productRes.isWished);
         setReviews(reviewsRes.items.map(toReview));
         setReviewPage(1);
