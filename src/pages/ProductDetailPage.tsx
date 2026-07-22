@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { addToCart } from '@/api/cart';
 import { getProduct, getReviews } from '@/api/product';
 import { addWishlist, removeWishlist } from '@/api/wishlist';
+import Toast from '@/components/Toast';
 import { useAuthStore } from '@/store/authStore';
 import { useCheckoutStore } from '@/store/checkoutStore';
 import type { ProductDetailResponse, ReviewItemResponse } from '@/types/product';
@@ -552,11 +553,7 @@ function ProductDetailPage() {
         </main>
 
         {/* 장바구니 담기 결과 토스트 */}
-        {cartMessage && (
-          <div className="absolute top-18 left-1/2 z-30 w-max -translate-x-1/2 rounded-lg bg-white px-4 py-3 shadow-[4px_4px_12px_0px_rgba(0,0,0,0.2)]">
-            <p className="text-body-9 whitespace-nowrap text-black">{cartMessage}</p>
-          </div>
-        )}
+        <Toast message={cartMessage} onClose={() => setCartMessage(null)} />
 
         {/* 하단 액션 바: h=67, px=12, py=12 */}
         <div className="flex shrink-0 items-center gap-2 border-t border-gray-200 px-3 py-3">

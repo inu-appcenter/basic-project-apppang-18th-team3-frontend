@@ -1,12 +1,13 @@
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { getMe, updateMe, updatePassword } from '@/api/mypage';
 import NavigationBar from '@/components/NavigationBar';
+import Toast from '@/components/Toast';
 import { useAuthStore } from '@/store/authStore';
 
-type Toast = { text: string; tone: 'success' | 'error' };
+type ToastState = { text: string; tone: 'success' | 'error' };
 
 // ─── Local sub-components (이 페이지 전용) ──────────────────
 function SectionDivider({ label }: { label: string }) {
@@ -30,15 +31,32 @@ function EditField({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const [visible, setVisible] = useState(false);
+  const isPassword = type === 'password';
+
   return (
     <div className="flex h-10 w-full items-center border border-gray-300 px-3">
       <input
-        type={type}
+        type={isPassword && visible ? 'text' : type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className="text-body-9 w-full text-black placeholder:text-gray-300 focus:outline-none"
       />
+      {isPassword && (
+        <button
+          type="button"
+          onClick={() => setVisible((prev) => !prev)}
+          aria-label={visible ? '비밀번호 숨기기' : '비밀번호 보기'}
+          className="shrink-0"
+        >
+          {visible ? (
+            <EyeOff size={18} className="text-gray-300" />
+          ) : (
+            <Eye size={18} className="text-gray-300" />
+          )}
+        </button>
+      )}
     </div>
   );
 }
@@ -143,7 +161,8 @@ function SettingsPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const [toast, setToast] = useState<Toast | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -156,21 +175,31 @@ function SettingsPage() {
       .catch(() => {});
   }, [isLoggedIn]);
 
-  const showToast = (text: string, tone: Toast['tone']) => setToast({ text, tone });
+  const showToast = (text: string, tone: ToastState['tone']) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast({ text, tone });
+    toastTimerRef.current = setTimeout(() => setToast(null), 2000);
+  };
 
   const toggleEditName = () => {
-    setEditingName((prev) => !prev);
-    setNameInput('');
+    setEditingName((prev) => {
+      if (!prev) setNameInput(name);
+      return !prev;
+    });
   };
 
   const toggleEditEmail = () => {
-    setEditingEmail((prev) => !prev);
-    setEmailInput('');
+    setEditingEmail((prev) => {
+      if (!prev) setEmailInput(email);
+      return !prev;
+    });
   };
 
   const toggleEditPhone = () => {
-    setEditingPhone((prev) => !prev);
-    setPhoneInput('');
+    setEditingPhone((prev) => {
+      if (!prev) setPhoneInput(phoneNumber);
+      return !prev;
+    });
   };
 
   const handleUpdateName = async () => {
@@ -335,21 +364,11 @@ function SettingsPage() {
 
         <NavigationBar />
 
-        {/* Toast */}
-        {toast && (
-          <div className="absolute top-18 left-1/2 flex w-max -translate-x-1/2 items-center gap-3 rounded-lg bg-white px-4 py-3 shadow-[4px_4px_12px_0px_rgba(0,0,0,0.2)]">
-            <button type="button" onClick={() => setToast(null)} className="shrink-0">
-              <X size={12} className="text-gray-300" />
-            </button>
-            <p
-              className={`text-body-9 whitespace-nowrap ${
-                toast.tone === 'success' ? 'text-black' : 'text-red-300'
-              }`}
-            >
-              {toast.text}
-            </p>
-          </div>
-        )}
+        <Toast
+          message={toast?.text ?? null}
+          tone={toast?.tone === 'error' ? 'error' : 'default'}
+          onClose={() => setToast(null)}
+        />
       </div>
     </div>
   );

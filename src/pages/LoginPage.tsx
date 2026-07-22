@@ -1,8 +1,9 @@
 import { ChevronRight, Eye, EyeOff, X } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { login } from '@/api/auth';
+import Toast from '@/components/Toast';
 import { useAuthStore } from '@/store/authStore';
 
 function LoginPage() {
@@ -13,13 +14,16 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
-  const [loginError, setLoginError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [infoMessage, setInfoMessage] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastTone, setToastTone] = useState<'default' | 'error'>('default');
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const showInfo = (text: string) => {
-    setInfoMessage(text);
-    setTimeout(() => setInfoMessage(null), 2000);
+  const showToast = (message: string, tone: 'default' | 'error' = 'default') => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToastMessage(message);
+    setToastTone(tone);
+    toastTimerRef.current = setTimeout(() => setToastMessage(null), 2000);
   };
 
   const isActive = email.length > 0 && password.length > 0;
@@ -28,13 +32,12 @@ function LoginPage() {
     e.preventDefault();
     if (!isActive || isLoading) return;
     setIsLoading(true);
-    setLoginError(false);
     try {
       const { token, user } = await login({ email, password });
       setAuth(token, user);
       navigate('/');
     } catch {
-      setLoginError(true);
+      showToast('아이디 또는 비밀번호가 일치하지 않습니다', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -130,7 +133,7 @@ function LoginPage() {
       <div className="mt-3 flex justify-end">
         <button
           type="button"
-          onClick={() => showInfo('아이디·비밀번호 찾기는 준비 중인 기능입니다')}
+          onClick={() => showToast('아이디·비밀번호 찾기는 준비 중인 기능입니다')}
           className="text-body-9 text-primary-200 flex items-center gap-0.5"
         >
           아이디·비밀번호 찾기
@@ -155,7 +158,7 @@ function LoginPage() {
         <span className="text-body-9 text-black">사업자이신가요?</span>
         <button
           type="button"
-          onClick={() => showInfo('사업자 회원 가입은 준비 중인 기능입니다')}
+          onClick={() => showToast('사업자 회원 가입은 준비 중인 기능입니다')}
           className="text-body-9 text-primary-200 flex items-center gap-0.5"
         >
           사업자 회원 가입하기
@@ -163,24 +166,7 @@ function LoginPage() {
         </button>
       </div>
 
-      {/* Toast — 로그인 실패 */}
-      {loginError && (
-        <div className="absolute top-18 left-1/2 flex w-max -translate-x-1/2 items-center gap-3 rounded-lg bg-white px-4 py-3 shadow-[4px_4px_12px_0px_rgba(0,0,0,0.2)]">
-          <button type="button" onClick={() => setLoginError(false)} className="shrink-0">
-            <X size={12} className="text-gray-300" />
-          </button>
-          <p className="text-body-9 whitespace-nowrap text-black">
-            아이디 또는 비밀번호가 일치하지 않습니다
-          </p>
-        </div>
-      )}
-
-      {/* Toast — 준비 중 기능 안내 */}
-      {infoMessage && (
-        <div className="absolute top-18 left-1/2 w-max -translate-x-1/2 rounded-lg bg-white px-4 py-3 shadow-[4px_4px_12px_0px_rgba(0,0,0,0.2)]">
-          <p className="text-body-9 whitespace-nowrap text-black">{infoMessage}</p>
-        </div>
-      )}
+      <Toast message={toastMessage} tone={toastTone} onClose={() => setToastMessage(null)} />
     </div>
   );
 }

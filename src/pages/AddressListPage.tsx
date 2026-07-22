@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { deleteAddress, getAddresses } from '@/api/address';
 import ConfirmModal from '@/components/ConfirmModal';
 import NavigationBar from '@/components/NavigationBar';
+import Toast from '@/components/Toast';
 import type { AddressResponse } from '@/types/address';
 
 function AddressCard({
@@ -126,11 +127,7 @@ function AddressListPage() {
         onConfirm={handleConfirmDelete}
       />
 
-      {errorMessage && (
-        <div className="fixed top-18 left-1/2 z-30 w-max -translate-x-1/2 rounded-lg bg-white px-4 py-3 shadow-[4px_4px_12px_0px_rgba(0,0,0,0.2)]">
-          <p className="text-body-9 whitespace-nowrap text-black">{errorMessage}</p>
-        </div>
-      )}
+      <Toast message={errorMessage} tone="error" onClose={() => setErrorMessage(null)} />
     </div>
   );
 }

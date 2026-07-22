@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { addToCart } from '@/api/cart';
 import { getOrders } from '@/api/mypage';
 import NavigationBar from '@/components/NavigationBar';
+import Toast from '@/components/Toast';
 import { useCheckoutStore } from '@/store/checkoutStore';
 import type { OrderItemInfo, OrderSummaryResponse } from '@/types/mypage';
 
@@ -170,11 +171,7 @@ function OrderListPage() {
 
         <NavigationBar />
 
-        {cartMessage && (
-          <div className="absolute top-18 left-1/2 z-30 w-max -translate-x-1/2 rounded-lg bg-white px-4 py-3 shadow-[4px_4px_12px_0px_rgba(0,0,0,0.2)]">
-            <p className="text-body-9 whitespace-nowrap text-black">{cartMessage}</p>
-          </div>
-        )}
+        <Toast message={cartMessage} onClose={() => setCartMessage(null)} />
       </div>
     </div>
   );
