@@ -1,15 +1,17 @@
 import type { ReactNode } from 'react';
 import {
+  Baby,
   Camera,
-  Clock7,
-  Gift,
-  HandPlatter,
-  Milk,
+  Car,
+  Dumbbell,
+  PawPrint,
   Pizza,
-  Popcorn,
-  Rocket,
   Search,
   Shirt,
+  Sofa,
+  Sparkles,
+  SprayCan,
+  Tv,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -33,13 +35,13 @@ const CATEGORIES: Category[] = [
     id: 2,
     label: '생활용품',
     path: '/products?category=생활용품',
-    icon: <Popcorn size={36} strokeWidth={1.5} />,
+    icon: <SprayCan size={36} strokeWidth={1.5} />,
   },
   {
     id: 3,
     label: '뷰티',
     path: '/products?category=뷰티',
-    icon: <Milk size={36} strokeWidth={1.5} />,
+    icon: <Sparkles size={36} strokeWidth={1.5} />,
   },
   {
     id: 4,
@@ -51,37 +53,37 @@ const CATEGORIES: Category[] = [
     id: 5,
     label: '가전·디지털',
     path: '/products?category=가전·디지털',
-    icon: <Gift size={36} strokeWidth={1.5} />,
+    icon: <Tv size={36} strokeWidth={1.5} />,
   },
   {
     id: 6,
     label: '홈인테리어',
     path: '/products?category=홈인테리어',
-    icon: <Clock7 size={36} strokeWidth={1.5} />,
+    icon: <Sofa size={36} strokeWidth={1.5} />,
   },
   {
     id: 7,
     label: '출산·유아',
     path: '/products?category=출산·유아',
-    icon: <Shirt size={36} strokeWidth={1.5} />,
+    icon: <Baby size={36} strokeWidth={1.5} />,
   },
   {
     id: 8,
     label: '반려동물',
     path: '/products?category=반려동물',
-    icon: <HandPlatter size={36} strokeWidth={1.5} />,
+    icon: <PawPrint size={36} strokeWidth={1.5} />,
   },
   {
     id: 9,
     label: '스포츠·레저',
     path: '/products?category=스포츠·레저',
-    icon: <Rocket size={36} strokeWidth={1.5} />,
+    icon: <Dumbbell size={36} strokeWidth={1.5} />,
   },
   {
     id: 10,
     label: '자동차용품',
     path: '/products?category=자동차용품',
-    icon: <Rocket size={36} strokeWidth={1.5} />,
+    icon: <Car size={36} strokeWidth={1.5} />,
   },
 ];
 
@@ -90,7 +92,8 @@ function MainPage() {
   const navigate = useNavigate();
   const [banners, setBanners] = useState<BannerResponse[]>([]);
   const [currentBanner, setCurrentBanner] = useState(0);
-  const touchStartX = useRef(0);
+  const dragStartX = useRef(0);
+  const isDragging = useRef(false);
 
   useEffect(() => {
     getBanners()
@@ -106,13 +109,15 @@ function MainPage() {
     return () => clearInterval(timer);
   }, [banners.length]);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
+  const handleDragStart = (clientX: number) => {
+    dragStartX.current = clientX;
+    isDragging.current = true;
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (banners.length === 0) return;
-    const diff = touchStartX.current - e.changedTouches[0].clientX;
+  const handleDragEnd = (clientX: number) => {
+    if (!isDragging.current || banners.length === 0) return;
+    isDragging.current = false;
+    const diff = dragStartX.current - clientX;
     if (Math.abs(diff) > 50) {
       setCurrentBanner((prev) =>
         diff > 0 ? (prev + 1) % banners.length : (prev - 1 + banners.length) % banners.length,
@@ -139,9 +144,12 @@ function MainPage() {
 
       {/* 배너 슬라이더 — 176px, Secondary-100 bg */}
       <div
-        className="bg-secondary-100 relative h-44 overflow-hidden"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
+        className="bg-secondary-100 relative h-44 cursor-grab overflow-hidden select-none"
+        onPointerDown={(e) => handleDragStart(e.clientX)}
+        onPointerUp={(e) => handleDragEnd(e.clientX)}
+        onPointerLeave={() => {
+          isDragging.current = false;
+        }}
         role="region"
         aria-label="배너 슬라이더"
       >
