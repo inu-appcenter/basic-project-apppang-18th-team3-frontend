@@ -106,17 +106,26 @@ function OrderListPage() {
 
   const handleBuyNow = (item: OrderItemInfo) => {
     setCheckoutItems([
-      { productId: item.productId, productName: item.productName, price: item.price, quantity: 1 },
+      {
+        productId: item.productId,
+        productName: item.productName,
+        price: item.price,
+        quantity: item.quantity,
+      },
     ]);
     navigate('/checkout');
   };
 
-  const groups = new Map<string, Row[]>();
+  // 날짜 -> 주문ID -> 아이템 순으로 묶어서, 같은 날짜에 주문이 여러 건이어도
+  // 주문 단위로 구분해서 보여준다.
+  const groups = new Map<string, Map<number, Row[]>>();
   orders.forEach((order) => {
     const key = formatOrderDate(order.orderDate);
-    const rows = groups.get(key) ?? [];
+    const dateGroup = groups.get(key) ?? new Map<number, Row[]>();
+    const rows = dateGroup.get(order.orderId) ?? [];
     order.items.forEach((item) => rows.push({ orderId: order.orderId, item }));
-    groups.set(key, rows);
+    dateGroup.set(order.orderId, rows);
+    groups.set(key, dateGroup);
   });
 
   return (
@@ -138,17 +147,22 @@ function OrderListPage() {
           {groups.size === 0 && (
             <p className="text-body-9 px-4 py-10 text-center text-gray-300">주문 내역이 없습니다</p>
           )}
-          {Array.from(groups.entries()).map(([date, rows]) => (
+          {Array.from(groups.entries()).map(([date, orderGroups]) => (
             <div key={date} className="flex flex-col">
               <p className="bg-white px-3.75 py-2.5 text-[15px] font-bold text-black">{date}</p>
-              {rows.map((row) => (
-                <OrderRow
-                  key={row.item.orderItemId}
-                  row={row}
-                  onAddToCart={() => handleAddToCart(row.item.productId)}
-                  onViewDetail={() => navigate(`/mypage/orders/${row.orderId}`)}
-                  onBuyNow={() => handleBuyNow(row.item)}
-                />
+              {Array.from(orderGroups.entries()).map(([orderId, rows], index) => (
+                <div key={orderId} className="flex flex-col">
+                  {index > 0 && <div className="h-2 bg-gray-100" />}
+                  {rows.map((row) => (
+                    <OrderRow
+                      key={row.item.orderItemId}
+                      row={row}
+                      onAddToCart={() => handleAddToCart(row.item.productId)}
+                      onViewDetail={() => navigate(`/mypage/orders/${row.orderId}`)}
+                      onBuyNow={() => handleBuyNow(row.item)}
+                    />
+                  ))}
+                </div>
               ))}
             </div>
           ))}

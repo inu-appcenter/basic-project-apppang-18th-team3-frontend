@@ -145,9 +145,7 @@ function CheckoutPage() {
             )}
 
             <div className="flex flex-col gap-1.25">
-              <p className="text-[16px] font-extrabold text-black">
-                배송 {items.length}건 중 {items.length}
-              </p>
+              <p className="text-[16px] font-extrabold text-black">주문 상품 {items.length}건</p>
               <div className="flex flex-col">
                 {items.map((item) => (
                   <div
@@ -182,17 +180,9 @@ function CheckoutPage() {
               </div>
             </div>
 
-            <div className="flex flex-col">
-              <div className="flex flex-col gap-1.5 border border-gray-200 bg-gray-100 px-5 py-3.75">
-                <p className="text-[16px] font-extrabold text-black">결제수단</p>
-                <p className="text-[14px] font-semibold text-gray-400">{PAYMENT_METHOD}, 일시불</p>
-              </div>
-              <div className="flex items-center gap-3.75 border border-gray-200 bg-white px-5 py-3.75">
-                <span className="border-primary-200 flex size-4 items-center justify-center rounded-full border">
-                  <span className="bg-primary-200 size-2 rounded-full" />
-                </span>
-                <p className="text-[15px] font-extrabold text-black">{PAYMENT_METHOD}</p>
-              </div>
+            <div className="flex flex-col gap-1.5 border border-gray-200 bg-gray-100 px-5 py-3.75">
+              <p className="text-[16px] font-extrabold text-black">결제수단</p>
+              <p className="text-[14px] font-semibold text-gray-400">{PAYMENT_METHOD}, 일시불</p>
             </div>
 
             <div className="flex flex-col gap-3.75 border border-gray-200 bg-white px-5 py-3.75">
@@ -234,7 +224,11 @@ function CheckoutPage() {
             onClick={handlePay}
             className="text-body-5 bg-primary-200 flex h-11.75 w-full items-center justify-center font-extrabold text-white transition-colors disabled:bg-gray-200"
           >
-            결제하기
+            {isSubmitting ? (
+              <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            ) : (
+              '결제하기'
+            )}
           </button>
         </div>
       </div>

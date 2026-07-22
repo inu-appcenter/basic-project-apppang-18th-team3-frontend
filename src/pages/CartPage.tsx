@@ -110,16 +110,16 @@ function PriceSheet({
   );
 }
 
-function Toast({ visible }: { visible: boolean }) {
+function Toast({ text }: { text: string | null }) {
   return (
     <div
       className={`pointer-events-none fixed bottom-28 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded bg-white px-3 py-2 shadow-[0_4px_16px_rgba(0,0,0,0.15)] transition-all duration-300 ${
-        visible ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
+        text ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
       }`}
     >
       <TriangleAlert size={12} className="shrink-0 text-yellow-300" />
       <span className="text-body-9 font-semibold whitespace-nowrap text-black">
-        수량은 하나 이상이여야 합니다
+        {text ?? '수량은 하나 이상이여야 합니다'}
       </span>
     </div>
   );
@@ -247,7 +247,7 @@ function CartPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [priceSheetOpen, setPriceSheetOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | 'checked' | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -265,10 +265,10 @@ function CartPage() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const showToast = useCallback(() => {
+  const showToast = useCallback((message: string) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToastVisible(true);
-    toastTimerRef.current = setTimeout(() => setToastVisible(false), 2000);
+    setToastMessage(message);
+    toastTimerRef.current = setTimeout(() => setToastMessage(null), 2000);
   }, []);
 
   useEffect(
@@ -306,17 +306,31 @@ function CartPage() {
     });
   };
 
+  const restoreItem = (item: CartItem) => {
+    setItems((prev) => [...prev, item]);
+    setCheckedIds((prev) => new Set(prev).add(item.id));
+  };
+
   const confirmDelete = () => {
     if (pendingDeleteId === 'checked') {
       const idsToDelete = Array.from(checkedIds);
-      idsToDelete.forEach((id) => {
-        removeItemLocal(id);
-        deleteCartItem(id).catch(() => {});
+      const deletedItems = items.filter((item) => idsToDelete.includes(item.id));
+      idsToDelete.forEach((id) => removeItemLocal(id));
+      Promise.allSettled(idsToDelete.map((id) => deleteCartItem(id))).then((results) => {
+        const failed = deletedItems.filter((_, index) => results[index].status === 'rejected');
+        if (failed.length > 0) {
+          failed.forEach(restoreItem);
+          showToast('상품 삭제에 실패했습니다');
+        }
       });
     } else if (pendingDeleteId !== null) {
       const id = pendingDeleteId;
+      const deletedItem = items.find((item) => item.id === id);
       removeItemLocal(id);
-      deleteCartItem(id).catch(() => {});
+      deleteCartItem(id).catch(() => {
+        if (deletedItem) restoreItem(deletedItem);
+        showToast('상품 삭제에 실패했습니다');
+      });
     }
     setPendingDeleteId(null);
   };
@@ -325,7 +339,7 @@ function CartPage() {
     const item = items.find((i) => i.id === id);
     if (!item) return;
     if (delta < 0 && item.quantity <= 1) {
-      showToast();
+      showToast('수량은 하나 이상이여야 합니다');
       return;
     }
     const nextQuantity = item.quantity + delta;
@@ -360,7 +374,7 @@ function CartPage() {
 
   return (
     <div className="flex min-h-screen justify-center">
-      <Toast visible={toastVisible} />
+      <Toast text={toastMessage} />
       <PriceSheet
         open={priceSheetOpen}
         onClose={() => setPriceSheetOpen(false)}

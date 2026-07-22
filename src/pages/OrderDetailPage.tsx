@@ -113,6 +113,15 @@ function OrderDetailPage() {
                           {item.price.toLocaleString()}원 · {item.quantity}개
                         </p>
                       </div>
+                      {item.status === '배송완료' && (
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/products/${item.productId}`)}
+                          className="text-body-10 border-primary-200 text-primary-200 shrink-0 rounded border px-3 py-1.5 font-semibold"
+                        >
+                          리뷰 쓰기
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
