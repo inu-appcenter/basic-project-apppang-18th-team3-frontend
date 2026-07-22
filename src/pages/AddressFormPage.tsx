@@ -188,6 +188,15 @@ function DeliverySection({
               </span>
             </button>
           </div>
+
+          <button
+            type="button"
+            disabled={!summary}
+            onClick={() => onChange({ ...state, expanded: false })}
+            className="bg-primary-200 text-body-7 h-9 w-full font-bold text-white disabled:bg-gray-200"
+          >
+            완료
+          </button>
         </div>
       )}
     </div>
@@ -206,6 +215,7 @@ function AddressFormPage() {
   );
   const [recipientName, setRecipientName] = useState('');
   const [address, setAddress] = useState('');
+  const [detailAddress, setDetailAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [normal, setNormal] = useState<DeliveryState>(EMPTY_DELIVERY);
   const [rocket, setRocket] = useState<DeliveryState>(EMPTY_DELIVERY);
@@ -215,7 +225,8 @@ function AddressFormPage() {
   const applyExisting = (found: AddressResponse) => {
     setEditTargetId(found.addressId);
     setRecipientName(found.recipientName);
-    setAddress(`${found.address} ${found.detailAddress}`.trim());
+    setAddress(found.address);
+    setDetailAddress(found.detailAddress);
     setPhone(found.phone);
     setIsDefault(found.isDefault);
   };
@@ -247,7 +258,7 @@ function AddressFormPage() {
         phone,
         zipcode: '',
         address,
-        detailAddress: '',
+        detailAddress,
         normalDeliveryRequest: composeDeliveryText(normal),
         rocketDeliveryRequest: composeDeliveryText(rocket),
         isDefault,
@@ -285,12 +296,25 @@ function AddressFormPage() {
             value={recipientName}
             onChange={setRecipientName}
           />
-          <IconField
-            icon={<MapPin size={20} className="text-gray-300" />}
-            placeholder="주소를 입력하세요"
-            value={address}
-            onChange={setAddress}
-          />
+          <div className="flex w-full items-stretch border border-gray-300">
+            <div className="flex w-12 shrink-0 items-center justify-center border-r border-gray-300 bg-gray-100">
+              <MapPin size={20} className="text-gray-300" />
+            </div>
+            <div className="flex flex-1 flex-col divide-y divide-gray-300">
+              <input
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="도로명 주소를 입력하세요"
+                className="text-body-7 h-13 px-3 font-bold text-black outline-none placeholder:text-gray-300"
+              />
+              <input
+                value={detailAddress}
+                onChange={(e) => setDetailAddress(e.target.value)}
+                placeholder="상세 주소를 입력하세요 (동/호수 등)"
+                className="text-body-7 h-13 px-3 font-bold text-black outline-none placeholder:text-gray-300"
+              />
+            </div>
+          </div>
           <IconField
             icon={<Phone size={20} className="text-gray-300" />}
             type="tel"
@@ -310,8 +334,8 @@ function AddressFormPage() {
                 onChange={setNormal}
               />
               <DeliverySection
-                title="새벽 배송 정보"
-                placeholder="새벽 배송 정보를 선택해 주세요."
+                title="로켓 배송 정보"
+                placeholder="로켓 배송 정보를 선택해 주세요."
                 state={rocket}
                 onChange={setRocket}
               />

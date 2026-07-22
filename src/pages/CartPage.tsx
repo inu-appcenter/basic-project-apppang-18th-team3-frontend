@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { deleteCartItem, getCart, updateCartQuantity } from '@/api/cart';
 import CheckBox from '@/components/CheckBox';
+import ConfirmModal from '@/components/ConfirmModal';
 import { useCheckoutStore } from '@/store/checkoutStore';
 import type { CartItemResponse } from '@/types/cart';
 
@@ -197,47 +198,6 @@ function CartItemCard({
   );
 }
 
-function ConfirmDeleteModal({
-  open,
-  onCancel,
-  onConfirm,
-}: {
-  open: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <button
-        type="button"
-        aria-label="닫기"
-        onClick={onCancel}
-        className="absolute inset-0 bg-black/60"
-      />
-      <div className="relative w-72 rounded-xl bg-white p-5">
-        <p className="text-body-7 mb-4 text-center text-black">상품을 삭제하시겠습니까?</p>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="text-body-9 flex-1 rounded border border-gray-200 py-2.5 font-semibold text-black"
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className="text-body-9 bg-primary-200 flex-1 rounded py-2.5 font-semibold text-white"
-          >
-            삭제
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────
 function CartPage() {
   const navigate = useNavigate();
@@ -383,8 +343,9 @@ function CartPage() {
         shippingFee={shippingFee}
         totalPrice={totalPrice}
       />
-      <ConfirmDeleteModal
+      <ConfirmModal
         open={pendingDeleteId !== null}
+        message="상품을 삭제하시겠습니까?"
         onCancel={() => setPendingDeleteId(null)}
         onConfirm={confirmDelete}
       />

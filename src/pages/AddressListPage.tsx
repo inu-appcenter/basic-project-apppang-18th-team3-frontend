@@ -2,11 +2,20 @@ import { ChevronLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { getAddresses } from '@/api/address';
+import { deleteAddress, getAddresses } from '@/api/address';
+import ConfirmModal from '@/components/ConfirmModal';
 import NavigationBar from '@/components/NavigationBar';
 import type { AddressResponse } from '@/types/address';
 
-function AddressCard({ address, onEdit }: { address: AddressResponse; onEdit: () => void }) {
+function AddressCard({
+  address,
+  onEdit,
+  onDelete,
+}: {
+  address: AddressResponse;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
   return (
     <div className="flex w-full flex-col items-start gap-3 border border-gray-200 bg-white px-5 py-4.5">
       <p className="text-[15px] font-bold text-black">{address.recipientName}</p>
@@ -25,13 +34,22 @@ function AddressCard({ address, onEdit }: { address: AddressResponse; onEdit: ()
           {address.rocketDeliveryRequest || '-'}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={onEdit}
-        className="text-body-9 text-primary-200 border border-gray-300 px-5 py-2"
-      >
-        수정
-      </button>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onEdit}
+          className="text-body-9 text-primary-200 border border-gray-300 px-5 py-2"
+        >
+          수정
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          className="text-body-9 border border-gray-300 px-5 py-2 text-gray-300"
+        >
+          삭제
+        </button>
+      </div>
     </div>
   );
 }
@@ -39,12 +57,26 @@ function AddressCard({ address, onEdit }: { address: AddressResponse; onEdit: ()
 function AddressListPage() {
   const navigate = useNavigate();
   const [addresses, setAddresses] = useState<AddressResponse[]>([]);
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     getAddresses()
       .then(setAddresses)
       .catch(() => setAddresses([]));
   }, []);
+
+  const handleConfirmDelete = () => {
+    if (pendingDeleteId === null) return;
+    const id = pendingDeleteId;
+    setPendingDeleteId(null);
+    deleteAddress(id)
+      .then(() => setAddresses((prev) => prev.filter((item) => item.addressId !== id)))
+      .catch(() => {
+        setErrorMessage('배송지 삭제에 실패했습니다');
+        setTimeout(() => setErrorMessage(null), 2000);
+      });
+  };
 
   return (
     <div className="flex min-h-screen justify-center">
@@ -70,6 +102,7 @@ function AddressListPage() {
                 onEdit={() =>
                   navigate(`/mypage/addresses/${address.addressId}/edit`, { state: { address } })
                 }
+                onDelete={() => setPendingDeleteId(address.addressId)}
               />
             ))}
 
@@ -85,6 +118,19 @@ function AddressListPage() {
 
         <NavigationBar />
       </div>
+
+      <ConfirmModal
+        open={pendingDeleteId !== null}
+        message="배송지를 삭제하시겠습니까?"
+        onCancel={() => setPendingDeleteId(null)}
+        onConfirm={handleConfirmDelete}
+      />
+
+      {errorMessage && (
+        <div className="fixed top-18 left-1/2 z-30 w-max -translate-x-1/2 rounded-lg bg-white px-4 py-3 shadow-[4px_4px_12px_0px_rgba(0,0,0,0.2)]">
+          <p className="text-body-9 whitespace-nowrap text-black">{errorMessage}</p>
+        </div>
+      )}
     </div>
   );
 }
