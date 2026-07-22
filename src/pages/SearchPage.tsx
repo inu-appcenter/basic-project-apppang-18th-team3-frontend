@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, ChevronLeft, Info, Search, X } from 'lucide-react';
 import NavigationBar from '@/components/NavigationBar';
+import Toast from '@/components/Toast';
 import {
   deleteSearchHistory,
   getSearchHistory,
@@ -30,13 +31,45 @@ const RECOMMENDED: string[] = [
 
 function HighlightedText({ text, query }: { text: string; query: string }) {
   const idx = text.toLowerCase().indexOf(query.toLowerCase());
-  if (idx < 0) return <>{text}</>;
+  if (idx < 0) return text;
   return (
     <>
       {text.slice(0, idx)}
       <span className="font-bold">{text.slice(idx, idx + query.length)}</span>
       {text.slice(idx + query.length)}
     </>
+  );
+}
+
+function SuggestionList({
+  suggestions,
+  query,
+  onSelect,
+}: {
+  suggestions: string[];
+  query: string;
+  onSelect: (keyword: string) => void;
+}) {
+  if (suggestions.length === 0) {
+    return <p className="text-body-9 px-1 py-10 text-center text-gray-300">검색 결과가 없습니다</p>;
+  }
+  return (
+    <ul>
+      {suggestions.map((suggestion) => (
+        <li key={suggestion}>
+          <button
+            type="button"
+            onClick={() => onSelect(suggestion)}
+            className="flex w-full items-center gap-2.5 border-b border-gray-200 py-1"
+          >
+            <Search size={24} className="shrink-0 text-gray-300" />
+            <span className="text-body-1 text-black">
+              <HighlightedText text={suggestion} query={query} />
+            </span>
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -52,6 +85,12 @@ function SearchPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 2000);
+  };
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -196,7 +235,13 @@ function SearchPage() {
                 <X size={12} className="text-black" />
               </button>
             ) : (
-              <Camera size={24} className="shrink-0 text-black" />
+              <button
+                type="button"
+                onClick={() => showToast('이미지 검색은 준비 중인 기능입니다')}
+                aria-label="이미지로 검색"
+              >
+                <Camera size={24} className="shrink-0 text-black" />
+              </button>
             )}
           </div>
         </div>
@@ -204,23 +249,7 @@ function SearchPage() {
         {/* 페이지 콘텐츠 */}
         <div className="flex-1 overflow-y-auto px-3">
           {showSuggestions ? (
-            /* 자동완성 목록 */
-            <ul>
-              {suggestions.map((suggestion) => (
-                <li key={suggestion}>
-                  <button
-                    type="button"
-                    onClick={() => handleSearch(suggestion)}
-                    className="flex w-full items-center gap-2.5 border-b border-gray-200 py-1"
-                  >
-                    <Search size={24} className="shrink-0 text-gray-300" />
-                    <span className="text-body-1 text-black">
-                      <HighlightedText text={suggestion} query={query} />
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <SuggestionList suggestions={suggestions} query={query} onSelect={handleSearch} />
           ) : (
             /* 기본 상태: 최근 검색어 + 추천 검색어 */
             <>
@@ -301,6 +330,7 @@ function SearchPage() {
         </div>
 
         <NavigationBar />
+        <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
       </div>
     </div>
   );
