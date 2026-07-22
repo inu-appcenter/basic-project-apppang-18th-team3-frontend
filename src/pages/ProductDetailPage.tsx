@@ -40,9 +40,9 @@ function toReview(item: ReviewItemResponse): Review {
 const COLOR_OPTIONS = ['화이트 + 그레이', '화이트', '그레이'];
 
 const QUANTITY_OPTIONS = [
-  { qty: '20개', discount: '9,810원 할인', savings: null },
-  { qty: '40개', discount: '9,810원 할인', savings: '40개 사면 840원 절약' },
-  { qty: '60개', discount: '9,810원 할인', savings: '60개 사면 1,840원 절약' },
+  { quantity: 20, qty: '20개', discount: '9,810원 할인', savings: null },
+  { quantity: 40, qty: '40개', discount: '9,810원 할인', savings: '40개 사면 840원 절약' },
+  { quantity: 60, qty: '60개', discount: '9,810원 할인', savings: '60개 사면 1,840원 절약' },
 ];
 
 // ─── Sub-components ───────────────────────────────────────
@@ -197,7 +197,7 @@ function ProductDetailPage() {
       return;
     }
     if (!product) return;
-    addToCart({ productId: product.productId, quantity: 1 })
+    addToCart({ productId: product.productId, quantity: QUANTITY_OPTIONS[selectedQty].quantity })
       .then(() => setCartMessage('장바구니에 담았습니다'))
       .catch(() => setCartMessage('장바구니 담기에 실패했습니다'))
       .finally(() => setTimeout(() => setCartMessage(null), 2000));
@@ -214,7 +214,7 @@ function ProductDetailPage() {
         productId: product.productId,
         productName: product.name,
         price: product.price,
-        quantity: 1,
+        quantity: QUANTITY_OPTIONS[selectedQty].quantity,
       },
     ]);
     navigate('/checkout');
@@ -224,19 +224,53 @@ function ProductDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <span className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-gray-300" />
+      <div className="flex min-h-screen justify-center">
+        <div className="relative flex h-screen w-full max-w-120 flex-col bg-white">
+          <header className="relative flex shrink-0 items-center justify-center bg-white px-3 py-5">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              aria-label="뒤로 가기"
+              className="absolute left-3 flex h-8 w-8 items-center justify-center"
+            >
+              <ChevronLeft size={24} className="text-black" />
+            </button>
+            <h1 className="text-title-5 font-bold text-black">상품 상세</h1>
+          </header>
+          <div className="flex flex-1 items-center justify-center">
+            <span className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-gray-300" />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error || !product) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-3">
-        <p className="text-body-7 text-black">상품 정보를 불러오지 못했습니다.</p>
-        <button type="button" onClick={() => navigate(-1)} className="text-body-9 text-primary-200">
-          이전으로 돌아가기
-        </button>
+      <div className="flex min-h-screen justify-center">
+        <div className="relative flex h-screen w-full max-w-120 flex-col bg-white">
+          <header className="relative flex shrink-0 items-center justify-center bg-white px-3 py-5">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              aria-label="뒤로 가기"
+              className="absolute left-3 flex h-8 w-8 items-center justify-center"
+            >
+              <ChevronLeft size={24} className="text-black" />
+            </button>
+            <h1 className="text-title-5 font-bold text-black">상품 상세</h1>
+          </header>
+          <div className="flex flex-1 flex-col items-center justify-center gap-3">
+            <p className="text-body-7 text-black">상품 정보를 불러오지 못했습니다.</p>
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="text-body-9 text-primary-200"
+            >
+              이전으로 돌아가기
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -456,6 +490,11 @@ function ProductDetailPage() {
                 리뷰 작성하기
               </button>
             </div>
+            {isLoggedIn && !canWriteReview && (
+              <p className="text-body-10 text-right text-gray-300">
+                구매한 상품에 한해 리뷰를 작성할 수 있어요
+              </p>
+            )}
           </div>
 
           {/* 사진/동영상 */}

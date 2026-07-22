@@ -180,6 +180,7 @@ function ProductListPage() {
   const [hasMore, setHasMore] = useState(true);
   const [sortIndex, setSortIndex] = useState(0);
   const [sortOpen, setSortOpen] = useState(false);
+  const [rocketOnly, setRocketOnly] = useState(false);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
@@ -251,7 +252,10 @@ function ProductListPage() {
       </header>
 
       {/* 정렬 바: pt=12 pb=12 px=12, 좌측 정렬 */}
-      <div className="relative border-b border-gray-200 px-3 py-3" ref={sortRef}>
+      <div
+        className="relative flex items-center justify-between border-b border-gray-200 px-3 py-3"
+        ref={sortRef}
+      >
         <button
           type="button"
           onClick={() => setSortOpen((prev) => !prev)}
@@ -262,6 +266,19 @@ function ProductListPage() {
             size={12}
             className={`transition-transform ${sortOpen ? 'rotate-180' : ''}`}
           />
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setRocketOnly((prev) => !prev)}
+          aria-pressed={rocketOnly}
+          className={`text-body-10 flex items-center gap-1 rounded-full border px-3 py-1.5 font-semibold transition-colors ${
+            rocketOnly
+              ? 'border-primary-200 bg-primary-200 text-white'
+              : 'border-gray-200 text-gray-300'
+          }`}
+        >
+          로켓배송만 보기
         </button>
 
         {sortOpen && (
@@ -287,7 +304,7 @@ function ProductListPage() {
 
       {/* 상품 목록 */}
       <div>
-        {products.map((product) => (
+        {(rocketOnly ? products.filter((product) => product.isRocket) : products).map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
