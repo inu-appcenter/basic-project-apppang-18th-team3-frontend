@@ -11,6 +11,7 @@ type SortOption = { label: string; value: string };
 type Product = {
   id: number;
   name: string;
+  imageUrl: string;
   price: number;
   originalPrice?: number;
   discountRate?: number;
@@ -26,7 +27,7 @@ type Product = {
 
 // ─── Constants ────────────────────────────────────────────
 const SORT_OPTIONS: SortOption[] = [
-  { label: '쿠팡 랭킹순', value: 'rank' },
+  { label: '앱팡 랭킹순', value: 'rank' },
   { label: '최신순', value: 'latest' },
   { label: '최저가순', value: 'price_asc' },
   { label: '최고가순', value: 'price_desc' },
@@ -40,6 +41,7 @@ function toProduct(item: ProductItemResponse): Product {
   return {
     id: item.productId,
     name: item.name,
+    imageUrl: item.imageUrl,
     price: item.price,
     originalPrice: item.originalPrice || undefined,
     discountRate: item.discountRate || undefined,
@@ -92,7 +94,15 @@ function ProductCard({ product }: { product: Product }) {
       className="flex w-full gap-2.5 border-b border-gray-200 px-3 py-4 text-left"
     >
       {/* 이미지: 120×120 */}
-      <div className="h-30 w-30 shrink-0 bg-gray-200" />
+      {product.imageUrl ? (
+        <img
+          src={product.imageUrl}
+          alt=""
+          className="h-30 w-30 shrink-0 bg-gray-200 object-cover"
+        />
+      ) : (
+        <div className="h-30 w-30 shrink-0 bg-gray-200" />
+      )}
 
       {/* 상품 정보 */}
       <div className="flex flex-1 flex-col gap-2 overflow-hidden">

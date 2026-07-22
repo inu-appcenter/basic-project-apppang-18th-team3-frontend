@@ -107,6 +107,12 @@ function RegisterPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
+
+  const showTermDetail = (label: string) => {
+    setInfoMessage(`${label} 상세 내용은 준비 중입니다`);
+    setTimeout(() => setInfoMessage(null), 2000);
+  };
 
   // ── Derived ───────────────────────────────────────────
   const allChecked = TERMS.every((t) => checkedTerms[t.id]);
@@ -351,7 +357,12 @@ function RegisterPage() {
                 {term.label}
               </p>
               {term.hasLink && (
-                <button type="button" aria-label={`${term.label} 상세보기`} className="shrink-0">
+                <button
+                  type="button"
+                  aria-label={`${term.label} 상세보기`}
+                  onClick={() => showTermDetail(term.label)}
+                  className="shrink-0"
+                >
                   <ChevronRight size={16} className="text-gray-300" />
                 </button>
               )}
@@ -378,6 +389,12 @@ function RegisterPage() {
         </button>
         {submitError && <p className="text-body-10 mt-2 text-center text-red-300">{submitError}</p>}
       </div>
+
+      {infoMessage && (
+        <div className="fixed top-18 left-1/2 z-30 w-max -translate-x-1/2 rounded-lg bg-white px-4 py-3 shadow-[4px_4px_12px_0px_rgba(0,0,0,0.2)]">
+          <p className="text-body-9 whitespace-nowrap text-black">{infoMessage}</p>
+        </div>
+      )}
     </div>
   );
 }

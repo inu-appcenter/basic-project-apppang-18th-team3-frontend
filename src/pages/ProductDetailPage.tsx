@@ -1,14 +1,4 @@
-import {
-  ChevronLeft,
-  ChevronRight,
-  Heart,
-  Pencil,
-  Play,
-  Share2,
-  Star,
-  ThumbsUp,
-  X,
-} from 'lucide-react';
+import { ChevronLeft, Heart, Pencil, Play, Share2, Star, ThumbsUp, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -126,6 +116,9 @@ function ProductDetailPage() {
 
   const [product, setProduct] = useState<ProductDetailResponse | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewPage, setReviewPage] = useState(1);
+  const [reviewTotal, setReviewTotal] = useState(0);
+  const [isLoadingMoreReviews, setIsLoadingMoreReviews] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -139,15 +132,51 @@ function ProductDetailPage() {
     if (!productId) return;
     setIsLoading(true);
     setError(false);
-    Promise.all([getProduct(productId), getReviews(productId)])
+    Promise.all([getProduct(productId), getReviews(productId, { page: 1 })])
       .then(([productRes, reviewsRes]) => {
         setProduct(productRes);
         setIsLiked(productRes.isWished);
         setReviews(reviewsRes.items.map(toReview));
+        setReviewPage(1);
+        setReviewTotal(reviewsRes.total);
       })
       .catch(() => setError(true))
       .finally(() => setIsLoading(false));
   }, [productId]);
+
+  const hasMoreReviews = reviews.length < reviewTotal;
+
+  const handleLoadMoreReviews = () => {
+    if (!productId || isLoadingMoreReviews) return;
+    setIsLoadingMoreReviews(true);
+    getReviews(productId, { page: reviewPage + 1 })
+      .then((res) => {
+        setReviews((prev) => [...prev, ...res.items.map(toReview)]);
+        setReviewPage((prev) => prev + 1);
+      })
+      .catch(() => {})
+      .finally(() => setIsLoadingMoreReviews(false));
+  };
+
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: product?.name, url: shareUrl });
+      } catch {
+        // 사용자가 공유를 취소한 경우
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCartMessage('링크가 복사되었습니다');
+    } catch {
+      setCartMessage('링크 복사에 실패했습니다');
+    } finally {
+      setTimeout(() => setCartMessage(null), 2000);
+    }
+  };
 
   const handleToggleWish = () => {
     if (!isLoggedIn) {
@@ -271,7 +300,7 @@ function ProductDetailPage() {
 
           {/* 공유 아이콘 */}
           <div className="flex items-center px-3 py-1.5">
-            <button type="button" aria-label="공유하기">
+            <button type="button" aria-label="공유하기" onClick={handleShare}>
               <Share2 size={24} className="text-black" />
             </button>
           </div>
@@ -280,11 +309,7 @@ function ProductDetailPage() {
           <div className="flex items-center gap-2.5 px-3 py-1">
             <div className="h-8 w-8 shrink-0 rounded bg-gray-200" />
             <div className="flex flex-col gap-0.5">
-              <button type="button" className="flex items-center gap-0.5">
-                <span className="text-body-7 font-bold text-black">{product.brand}</span>
-                <ChevronRight size={12} className="text-black" />
-              </button>
-              <p className="text-body-10 text-gray-300">브랜드 상품 모아보기</p>
+              <span className="text-body-7 font-bold text-black">{product.brand}</span>
             </div>
           </div>
 
@@ -385,15 +410,6 @@ function ProductDetailPage() {
                 </button>
               ))}
             </div>
-
-            {/* 모든 옵션 보기 */}
-            <button
-              type="button"
-              className="text-body-9 text-primary-200 flex w-full items-center justify-center gap-1 py-3 font-semibold"
-            >
-              모든 옵션 보기
-              <ChevronRight size={12} />
-            </button>
           </div>
 
           {/* 상품정보 */}
@@ -412,15 +428,8 @@ function ProductDetailPage() {
           <div className="h-2 bg-gray-100" />
 
           {/* 상품 리뷰 헤더 */}
-          <div className="flex items-center justify-between px-3 py-3">
+          <div className="flex items-center px-3 py-3">
             <h2 className="text-body-5 font-bold text-black">상품 리뷰</h2>
-            <button
-              type="button"
-              className="text-body-9 text-primary-200 flex items-center gap-0.5 font-semibold"
-            >
-              전체보기
-              <ChevronRight size={12} />
-            </button>
           </div>
 
           {/* 리뷰 요약 */}
@@ -479,14 +488,24 @@ function ProductDetailPage() {
             <ReviewItem key={review.id} review={review} />
           ))}
 
-          {/* 리뷰 전체보기 버튼 */}
+          {/* 리뷰 더보기 버튼 */}
           <div className="px-3 py-2">
-            <button
-              type="button"
-              className="text-body-5 text-primary-200 w-full rounded border border-gray-200 py-3 font-bold"
-            >
-              리뷰 전체보기
-            </button>
+            {hasMoreReviews ? (
+              <button
+                type="button"
+                onClick={handleLoadMoreReviews}
+                disabled={isLoadingMoreReviews}
+                className="text-body-5 text-primary-200 w-full rounded border border-gray-200 py-3 font-bold disabled:text-gray-200"
+              >
+                {isLoadingMoreReviews ? '불러오는 중...' : '리뷰 더보기'}
+              </button>
+            ) : (
+              reviews.length > 0 && (
+                <p className="text-body-9 w-full py-3 text-center text-gray-300">
+                  모든 리뷰를 확인했습니다
+                </p>
+              )
+            )}
           </div>
 
           {/* 하단 여백 (액션바 높이만큼) */}

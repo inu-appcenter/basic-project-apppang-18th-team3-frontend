@@ -64,9 +64,13 @@ function maskName(name: string): string {
 }
 
 // ─── Sub-components ───────────────────────────────────────
-function OrderCard({ order }: { order: Order }) {
+function OrderCard({ order, onClick }: { order: Order; onClick: () => void }) {
   return (
-    <div className="flex h-[154px] w-[124px] shrink-0 flex-col gap-1 rounded-lg border border-gray-200 bg-white p-2">
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-[154px] w-[124px] shrink-0 flex-col gap-1 rounded-lg border border-gray-200 bg-white p-2 text-left"
+    >
       {order.hasRocket && (
         <div className="flex items-center gap-0.5">
           <Rocket size={12} className="text-secondary-300" />
@@ -81,7 +85,7 @@ function OrderCard({ order }: { order: Order }) {
           <PackagePlus size={14} className="text-gray-300" />
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -94,6 +98,7 @@ function MyPage() {
 
   const [me, setMe] = useState<UserMeResponse | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -112,6 +117,11 @@ function MyPage() {
         clearAuth();
         navigate('/');
       });
+  };
+
+  const handleCustomerService = () => {
+    setInfoMessage('고객센터는 준비 중인 기능입니다');
+    setTimeout(() => setInfoMessage(null), 2000);
   };
 
   const displayName = me?.name ?? authUser?.name ?? '';
@@ -139,11 +149,11 @@ function MyPage() {
             <div className="rounded-xl bg-white px-3 py-3">
               <div className="flex justify-between px-[60px]">
                 <div>
-                  <span className="text-xs text-gray-300">쿠팡 캐시 </span>
+                  <span className="text-xs text-gray-300">앱팡 캐시 </span>
                   <span className="text-sm font-bold text-black">0 원</span>
                 </div>
                 <div>
-                  <span className="text-xs text-gray-300">쿠페이 머니 </span>
+                  <span className="text-xs text-gray-300">앱팡 머니 </span>
                   <span className="text-sm font-bold text-black">
                     {(me?.appMoney ?? 0).toLocaleString()} 원
                   </span>
@@ -216,7 +226,11 @@ function MyPage() {
             <p className="text-body-10 text-gray-300">주문 내역이 없습니다</p>
           )}
           {orders.map((order) => (
-            <OrderCard key={order.id} order={order} />
+            <OrderCard
+              key={order.id}
+              order={order}
+              onClick={() => navigate(`/mypage/orders/${order.id}`)}
+            />
           ))}
         </div>
       </div>
@@ -228,7 +242,11 @@ function MyPage() {
 
       {/* 하단 링크 */}
       <div className="flex items-center justify-center gap-6 py-4">
-        <button type="button" className="text-body-10 text-gray-300">
+        <button
+          type="button"
+          onClick={handleCustomerService}
+          className="text-body-10 text-gray-300"
+        >
           고객센터
         </button>
         <div className="h-2 w-px bg-gray-300" />
@@ -238,6 +256,12 @@ function MyPage() {
           </button>
         )}
       </div>
+
+      {infoMessage && (
+        <div className="fixed top-18 left-1/2 z-30 w-max -translate-x-1/2 rounded-lg bg-white px-4 py-3 shadow-[4px_4px_12px_0px_rgba(0,0,0,0.2)]">
+          <p className="text-body-9 whitespace-nowrap text-black">{infoMessage}</p>
+        </div>
+      )}
     </div>
   );
 }

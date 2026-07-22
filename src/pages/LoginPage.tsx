@@ -15,6 +15,12 @@ function LoginPage() {
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [loginError, setLoginError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
+
+  const showInfo = (text: string) => {
+    setInfoMessage(text);
+    setTimeout(() => setInfoMessage(null), 2000);
+  };
 
   const isActive = email.length > 0 && password.length > 0;
 
@@ -122,7 +128,11 @@ function LoginPage() {
 
       {/* Find Account */}
       <div className="mt-3 flex justify-end">
-        <button type="button" className="text-body-9 text-primary-200 flex items-center gap-0.5">
+        <button
+          type="button"
+          onClick={() => showInfo('아이디·비밀번호 찾기는 준비 중인 기능입니다')}
+          className="text-body-9 text-primary-200 flex items-center gap-0.5"
+        >
           아이디·비밀번호 찾기
           <ChevronRight size={12} className="text-primary-200" />
         </button>
@@ -143,7 +153,11 @@ function LoginPage() {
       {/* Business Row */}
       <div className="mt-4 flex items-center justify-center gap-1">
         <span className="text-body-9 text-black">사업자이신가요?</span>
-        <button type="button" className="text-body-9 text-primary-200 flex items-center gap-0.5">
+        <button
+          type="button"
+          onClick={() => showInfo('사업자 회원 가입은 준비 중인 기능입니다')}
+          className="text-body-9 text-primary-200 flex items-center gap-0.5"
+        >
           사업자 회원 가입하기
           <ChevronRight size={12} className="text-primary-200" />
         </button>
@@ -158,6 +172,13 @@ function LoginPage() {
           <p className="text-body-9 whitespace-nowrap text-black">
             아이디 또는 비밀번호가 일치하지 않습니다
           </p>
+        </div>
+      )}
+
+      {/* Toast — 준비 중 기능 안내 */}
+      {infoMessage && (
+        <div className="absolute top-18 left-1/2 w-max -translate-x-1/2 rounded-lg bg-white px-4 py-3 shadow-[4px_4px_12px_0px_rgba(0,0,0,0.2)]">
+          <p className="text-body-9 whitespace-nowrap text-black">{infoMessage}</p>
         </div>
       )}
     </div>
