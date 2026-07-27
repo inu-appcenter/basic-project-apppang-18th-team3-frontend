@@ -30,6 +30,13 @@ export interface OrderEstimateResponse {
   totalPrice: number;
 }
 
+export interface OrderCancelResponse {
+  orderId: number;
+  status: string;
+  refundMoney: number;
+  remainingMoney: number;
+}
+
 export interface OrderDetailResponse {
   orderId: number;
   orderDate: string;

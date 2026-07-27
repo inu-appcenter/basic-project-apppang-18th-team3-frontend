@@ -2,9 +2,13 @@ import { ChevronLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { getOrderDetail } from '@/api/order';
+import { cancelOrder, getOrderDetail } from '@/api/order';
+import ConfirmModal from '@/components/ConfirmModal';
 import NavigationBar from '@/components/NavigationBar';
+import Toast from '@/components/Toast';
 import type { OrderDetailResponse } from '@/types/order';
+
+const NOT_CANCELABLE_STATUSES = ['배송완료', '취소완료', '주문취소'];
 
 function AmountRow({ label, value }: { label: string; value: string }) {
   return (
@@ -19,6 +23,9 @@ function OrderDetailPage() {
   const navigate = useNavigate();
   const { orderId } = useParams<{ orderId: string }>();
   const [order, setOrder] = useState<OrderDetailResponse | null>(null);
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!orderId) return;
@@ -26,6 +33,24 @@ function OrderDetailPage() {
       .then(setOrder)
       .catch(() => setOrder(null));
   }, [orderId]);
+
+  const canCancel = !!order && !NOT_CANCELABLE_STATUSES.includes(order.status);
+
+  const handleCancelOrder = () => {
+    if (!orderId || isCanceling) return;
+    setIsCanceling(true);
+    cancelOrder(Number(orderId))
+      .then((res) => {
+        setOrder((prev) => (prev ? { ...prev, status: res.status } : prev));
+        setToastMessage('주문이 취소되었습니다');
+      })
+      .catch(() => setToastMessage('주문 취소에 실패했습니다'))
+      .finally(() => {
+        setIsCanceling(false);
+        setIsCancelConfirmOpen(false);
+        setTimeout(() => setToastMessage(null), 2000);
+      });
+  };
 
   return (
     <div className="flex min-h-screen justify-center">
@@ -126,12 +151,32 @@ function OrderDetailPage() {
                   </div>
                 ))}
               </div>
+
+              {canCancel && (
+                <button
+                  type="button"
+                  onClick={() => setIsCancelConfirmOpen(true)}
+                  className="text-body-9 border border-gray-300 py-3 font-semibold text-gray-300"
+                >
+                  주문 취소
+                </button>
+              )}
             </div>
           )}
         </div>
 
         <NavigationBar />
       </div>
+
+      <ConfirmModal
+        open={isCancelConfirmOpen}
+        message="주문을 취소하시겠습니까?"
+        confirmLabel="주문 취소"
+        onCancel={() => setIsCancelConfirmOpen(false)}
+        onConfirm={handleCancelOrder}
+      />
+
+      <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
     </div>
   );
 }

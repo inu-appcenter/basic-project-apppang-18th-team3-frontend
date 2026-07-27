@@ -1,5 +1,6 @@
 import instance from '@/api/instance';
 import type {
+  OrderCancelResponse,
   OrderCreateRequest,
   OrderCreateResponse,
   OrderDetailResponse,
@@ -19,5 +20,10 @@ export const createOrder = async (payload: OrderCreateRequest) => {
 
 export const getOrderDetail = async (orderId: number) => {
   const { data } = await instance.get<OrderDetailResponse>(`/api/orders/${orderId}`);
+  return data;
+};
+
+export const cancelOrder = async (orderId: number) => {
+  const { data } = await instance.post<OrderCancelResponse>(`/api/orders/${orderId}/cancel`);
   return data;
 };
