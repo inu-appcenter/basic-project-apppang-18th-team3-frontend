@@ -97,7 +97,7 @@ function SearchPage() {
 
     if (isLoggedIn) {
       getSearchHistory()
-        .then(({ items }) => setRecentSearches(items.map((item) => item.name)))
+        .then(({ items }) => setRecentSearches(items.map((item) => item.keyword)))
         .catch(() => setRecentSearches([]));
       return;
     }

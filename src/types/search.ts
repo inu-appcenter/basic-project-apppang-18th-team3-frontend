@@ -3,10 +3,8 @@ export interface SearchSuggestionResponse {
 }
 
 export interface SearchHistoryItem {
-  productId: number;
-  name: string;
-  imageUrl: string;
-  price: number;
+  keyword: string;
+  searchedAt: string;
 }
 
 export interface SearchHistoryListResponse {
