@@ -12,6 +12,7 @@ import AddressSelectPage from '@/pages/AddressSelectPage';
 import CartPage from '@/pages/CartPage';
 import ChatbotPage from '@/pages/ChatbotPage';
 import CheckoutPage from '@/pages/CheckoutPage';
+import FindAccountPage from '@/pages/FindAccountPage';
 import LoginPage from '@/pages/LoginPage';
 import MainPage from '@/pages/MainPage';
 import MyPage from '@/pages/MyPage';
@@ -64,6 +65,7 @@ function App() {
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/find-account" element={<FindAccountPage />} />
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

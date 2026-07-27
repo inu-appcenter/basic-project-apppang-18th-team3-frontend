@@ -34,3 +34,31 @@ export interface EmailCheckResponse {
 export interface LogoutResponse {
   message: string;
 }
+
+export interface FindEmailRequest {
+  name: string;
+  phoneNumber: string;
+}
+
+export interface FindEmailResponse {
+  emails: string[];
+}
+
+export interface PasswordResetVerifyRequest {
+  email: string;
+  name: string;
+  phoneNumber: string;
+}
+
+export interface PasswordResetVerifyResponse {
+  resetToken: string;
+}
+
+export interface ResetPasswordRequest {
+  resetToken: string;
+  newPassword: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
+}

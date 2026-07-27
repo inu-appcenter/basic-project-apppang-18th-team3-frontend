@@ -133,7 +133,7 @@ function LoginPage() {
       <div className="mt-3 flex justify-end">
         <button
           type="button"
-          onClick={() => showToast('아이디·비밀번호 찾기는 준비 중인 기능입니다')}
+          onClick={() => navigate('/find-account')}
           className="text-body-9 text-primary-200 flex items-center gap-0.5"
         >
           아이디·비밀번호 찾기

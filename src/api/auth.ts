@@ -1,9 +1,15 @@
 import instance from '@/api/instance';
 import type {
   EmailCheckResponse,
+  FindEmailRequest,
+  FindEmailResponse,
   LoginRequest,
   LoginResponse,
   LogoutResponse,
+  PasswordResetVerifyRequest,
+  PasswordResetVerifyResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
   SignupRequest,
   SignupResponse,
 } from '@/types/auth';
@@ -27,5 +33,23 @@ export const checkEmail = async (email: string) => {
 
 export const logout = async () => {
   const { data } = await instance.post<LogoutResponse>('/api/auth/logout');
+  return data;
+};
+
+export const findEmail = async (payload: FindEmailRequest) => {
+  const { data } = await instance.post<FindEmailResponse>('/api/auth/find-email', payload);
+  return data;
+};
+
+export const verifyPasswordReset = async (payload: PasswordResetVerifyRequest) => {
+  const { data } = await instance.post<PasswordResetVerifyResponse>(
+    '/api/auth/password-reset-verify',
+    payload,
+  );
+  return data;
+};
+
+export const resetPassword = async (payload: ResetPasswordRequest) => {
+  const { data } = await instance.post<ResetPasswordResponse>('/api/auth/reset-password', payload);
   return data;
 };
