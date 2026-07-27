@@ -481,7 +481,11 @@ function ProductDetailPage() {
                 type="button"
                 disabled={isLoggedIn && !canWriteReview}
                 onClick={() => {
-                  if (!isLoggedIn) navigate('/login');
+                  if (!isLoggedIn) {
+                    navigate('/login');
+                    return;
+                  }
+                  navigate(`/products/${product.productId}/reviews/new`);
                 }}
                 className="text-body-9 text-primary-200 flex items-center gap-1.5 font-semibold disabled:text-gray-200"
               >

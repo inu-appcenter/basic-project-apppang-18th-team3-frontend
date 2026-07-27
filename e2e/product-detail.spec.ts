@@ -67,4 +67,66 @@ test.describe('상품 상세 페이지', () => {
     await page.getByRole('button', { name: '장바구니 담기' }).click();
     await page.waitForURL('**/login');
   });
+
+  test('구매자가 리뷰를 작성하면 상세 페이지로 돌아온다', async ({ page }) => {
+    await page.route('**/api/auth/login', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ token: 'test-token', user: { userId: 1, name: '테스트유저' } }),
+      }),
+    );
+    await page.route('**/api/users/me', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          userId: 1,
+          email: 'user@example.com',
+          name: '테스트유저',
+          phoneNumber: '01000000000',
+          appMoney: 0,
+          createdAt: '2026-01-01T00:00:00',
+        }),
+      }),
+    );
+    await page.route('**/api/products/42', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ...PRODUCT_DETAIL, canWriteReview: true }),
+      }),
+    );
+    await page.route('**/api/products/42/reviews*', (route) => {
+      if (route.request().method() === 'POST') {
+        return route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify({ reviewId: 99, rating: 4, title: '' }),
+        });
+      }
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(REVIEW_LIST),
+      });
+    });
+
+    await page.goto('/login');
+    await page.fill('input[type="email"]', 'user@example.com');
+    await page.fill('input[type="password"]', 'password123');
+    await page.click('button:has-text("로그인")');
+    await page.waitForURL('/');
+
+    await page.goto('/products/42');
+    await page.getByRole('button', { name: '리뷰 작성하기' }).click();
+    await page.waitForURL('**/products/42/reviews/new');
+
+    await page.getByRole('button', { name: '4점' }).click();
+    await page.locator('textarea').fill('정말 좋은 상품이에요');
+    await page.getByRole('button', { name: '리뷰 등록' }).click();
+
+    await page.waitForURL('**/products/42');
+    expect(page.url()).not.toContain('/reviews/new');
+  });
 });

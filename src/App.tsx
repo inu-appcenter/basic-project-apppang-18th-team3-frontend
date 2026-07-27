@@ -22,6 +22,7 @@ import OrderListPage from '@/pages/OrderListPage';
 import ProductDetailPage from '@/pages/ProductDetailPage';
 import ProductListPage from '@/pages/ProductListPage';
 import RegisterPage from '@/pages/RegisterPage';
+import ReviewWritePage from '@/pages/ReviewWritePage';
 import SearchPage from '@/pages/SearchPage';
 import SettingsPage from '@/pages/SettingsPage';
 import { useAuthStore } from '@/store/authStore';
@@ -52,6 +53,7 @@ function App() {
         <Route path="/search" element={<SearchPage />} />
 
         <Route path="/products/:productId" element={<ProductDetailPage />} />
+        <Route path="/products/:productId/reviews/new" element={<ReviewWritePage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/mypage/addresses" element={<AddressListPage />} />

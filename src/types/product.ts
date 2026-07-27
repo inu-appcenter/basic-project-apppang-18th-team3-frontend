@@ -86,7 +86,7 @@ export interface ReviewCreateRequest {
   rating: number;
   title: string;
   content: string;
-  images: string[];
+  images: File[];
 }
 
 export interface ReviewCreateResponse {
