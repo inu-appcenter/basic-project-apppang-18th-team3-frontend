@@ -10,7 +10,10 @@ import type {
 } from '@/types/product';
 
 export const getProducts = async (params: GetProductsParams) => {
-  const { data } = await instance.get<ProductListResponse>('/api/products', { params });
+  const { categoryId, ...rest } = params;
+  const { data } = await instance.get<ProductListResponse>('/api/products', {
+    params: { ...rest, category_id: categoryId },
+  });
   return data;
 };
 
