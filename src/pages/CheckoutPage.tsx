@@ -12,9 +12,10 @@ const PAYMENT_METHOD = '앱팡 머니';
 
 function CheckoutPage() {
   const navigate = useNavigate();
-  const { items, addressId, setItems, setAddressId } = useCheckoutStore();
+  const { items, addressId, setItems, setAddressId, updateQuantity } = useCheckoutStore();
 
   const [addresses, setAddresses] = useState<AddressResponse[]>([]);
+  const [addressesLoaded, setAddressesLoaded] = useState(false);
   const [estimate, setEstimate] = useState<OrderEstimateResponse | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -32,7 +33,8 @@ function CheckoutPage() {
           if (defaultAddress) setAddressId(defaultAddress.addressId);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setAddressesLoaded(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -46,15 +48,7 @@ function CheckoutPage() {
   const selectedAddress = addresses.find((a) => a.addressId === addressId) ?? null;
 
   const changeQuantity = (productId: number, delta: number) => {
-    setItems(
-      items
-        .map((item) =>
-          item.productId === productId
-            ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-            : item,
-        )
-        .filter((item) => item.quantity > 0),
-    );
+    updateQuantity(productId, delta);
   };
 
   const handlePay = async () => {
@@ -142,6 +136,17 @@ function CheckoutPage() {
                   <ChevronRight size={24} className="shrink-0 text-black" />
                 </button>
               </div>
+            )}
+
+            {addressesLoaded && !selectedAddress && (
+              <button
+                type="button"
+                onClick={() => navigate('/mypage/addresses/new')}
+                className="flex w-full items-center justify-between gap-2 border border-gray-200 bg-gray-100 px-5 py-3.75"
+              >
+                <p className="text-[16px] font-extrabold text-black">배송지를 추가해주세요</p>
+                <ChevronRight size={24} className="shrink-0 text-black" />
+              </button>
             )}
 
             <div className="flex flex-col gap-1.25">
