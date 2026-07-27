@@ -30,6 +30,6 @@ export const updatePassword = async (payload: UpdatePasswordRequest) => {
 };
 
 export const getRecentProducts = async () => {
-  const { data } = await instance.get<RecentProductsResponse>('/api/users/recent-products');
+  const { data } = await instance.get<RecentProductsResponse>('/api/users/me/recent-products');
   return data.items;
 };

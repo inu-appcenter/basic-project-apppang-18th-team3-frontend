@@ -68,7 +68,7 @@ test.describe('회원가입 페이지', () => {
     await page.route('**/api/banners', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }),
     );
-    await page.route('**/api/users/recent-products', (route) =>
+    await page.route('**/api/users/me/recent-products', (route) =>
       route.fulfill({ status: 200, contentType: 'application/json', body: '{"items":[]}' }),
     );
 
