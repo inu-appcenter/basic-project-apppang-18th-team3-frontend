@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Minus, Plus } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { getAddresses } from '@/api/address';
@@ -12,8 +12,12 @@ const PAYMENT_METHOD = '앱팡 머니';
 
 function CheckoutPage() {
   const navigate = useNavigate();
-  const { items, addressId, setItems, setAddressId, updateQuantity } = useCheckoutStore();
+  const { items, addressId, setItems, setAddressId, updateQuantity, setQuantity } =
+    useCheckoutStore();
 
+  const [editingProductId, setEditingProductId] = useState<number | null>(null);
+  const [editingValue, setEditingValue] = useState('');
+  const editingInputRef = useRef<HTMLInputElement>(null);
   const [addresses, setAddresses] = useState<AddressResponse[]>([]);
   const [addressesLoaded, setAddressesLoaded] = useState(false);
   const [estimate, setEstimate] = useState<OrderEstimateResponse | null>(null);
@@ -47,8 +51,26 @@ function CheckoutPage() {
 
   const selectedAddress = addresses.find((a) => a.addressId === addressId) ?? null;
 
+  useEffect(() => {
+    if (editingProductId !== null) editingInputRef.current?.focus();
+  }, [editingProductId]);
+
   const changeQuantity = (productId: number, delta: number) => {
     updateQuantity(productId, delta);
+  };
+
+  const startEditingQuantity = (productId: number, quantity: number) => {
+    setEditingProductId(productId);
+    setEditingValue(String(quantity));
+  };
+
+  const commitEditingQuantity = () => {
+    if (editingProductId === null) return;
+    const parsed = Number(editingValue);
+    if (Number.isInteger(parsed) && parsed > 0) {
+      setQuantity(editingProductId, parsed);
+    }
+    setEditingProductId(null);
   };
 
   const handlePay = async () => {
@@ -155,12 +177,16 @@ function CheckoutPage() {
                 {items.map((item) => (
                   <div
                     key={item.productId}
-                    className="flex h-15 items-center gap-2.75 border border-gray-200 bg-white px-5 py-3"
+                    className="flex min-h-15 items-center gap-2.75 border border-gray-200 bg-white px-5 py-3"
                   >
                     <div className="size-15 shrink-0 bg-gray-200" />
                     <div className="flex flex-1 flex-col items-end gap-1.25">
                       <p className="line-clamp-1 w-full text-right text-[12px] font-medium text-black">
                         {item.productName}
+                      </p>
+                      <p className="text-[11px] text-gray-300">
+                        {item.price.toLocaleString()}원 ·{' '}
+                        {(item.price * item.quantity).toLocaleString()}원
                       </p>
                       <div className="flex h-7.25 items-center justify-between rounded-lg border border-black px-3 py-2">
                         <button
@@ -170,7 +196,29 @@ function CheckoutPage() {
                         >
                           <Minus size={16} className="text-black" />
                         </button>
-                        <span className="px-2 text-[10px] text-black">{item.quantity}</span>
+                        {editingProductId === item.productId ? (
+                          <input
+                            ref={editingInputRef}
+                            type="number"
+                            min={1}
+                            value={editingValue}
+                            onChange={(e) => setEditingValue(e.target.value)}
+                            onBlur={commitEditingQuantity}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') e.currentTarget.blur();
+                            }}
+                            className="w-8 px-1 text-center text-[10px] text-black outline-none"
+                          />
+                        ) : (
+                          <button
+                            type="button"
+                            aria-label="수량 직접 입력"
+                            onClick={() => startEditingQuantity(item.productId, item.quantity)}
+                            className="px-2 text-[10px] text-black"
+                          >
+                            {item.quantity}
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => changeQuantity(item.productId, 1)}

@@ -57,7 +57,11 @@ test.describe('체크아웃 페이지', () => {
       }),
     );
     await page.route('**/api/products/42', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(PRODUCT_DETAIL) }),
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(PRODUCT_DETAIL),
+      }),
     );
     await page.route('**/api/products/42/reviews*', (route) =>
       route.fulfill({
@@ -74,20 +78,34 @@ test.describe('체크아웃 페이지', () => {
       }),
     );
     await page.route('**/api/addresses', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([ADDRESS]) }),
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([ADDRESS]),
+      }),
     );
     await page.route('**/api/orders/estimate', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ productAmount: 2000, discountAmount: 0, shippingFee: 0, totalPrice: 2000 }),
+        body: JSON.stringify({
+          productAmount: 2000,
+          discountAmount: 0,
+          shippingFee: 0,
+          totalPrice: 2000,
+        }),
       }),
     );
     await page.route('**/api/orders', (route) =>
       route.fulfill({
         status: 201,
         contentType: 'application/json',
-        body: JSON.stringify({ orderId: 99, totalPrice: 2000, status: 'PAID', remainingMoney: 98000 }),
+        body: JSON.stringify({
+          orderId: 99,
+          totalPrice: 2000,
+          status: 'PAID',
+          remainingMoney: 98000,
+        }),
       }),
     );
 
@@ -98,7 +116,9 @@ test.describe('체크아웃 페이지', () => {
     await page.waitForURL('/');
   });
 
-  test('수량 변경 후에도 결제하기 버튼이 활성화 상태를 유지하고 결제가 진행된다', async ({ page }) => {
+  test('수량 변경 후에도 결제하기 버튼이 활성화 상태를 유지하고 결제가 진행된다', async ({
+    page,
+  }) => {
     await page.goto('/products/42');
     await page.getByRole('button', { name: '바로구매' }).click();
     await page.waitForURL('**/checkout');
@@ -128,5 +148,23 @@ test.describe('체크아웃 페이지', () => {
 
     await addAddressButton.click();
     await page.waitForURL('**/mypage/addresses/new');
+  });
+
+  test('수량을 직접 입력해 변경할 수 있고 0 이하는 무시한다', async ({ page }) => {
+    await page.goto('/products/42');
+    await page.getByRole('button', { name: '바로구매' }).click();
+    await page.waitForURL('**/checkout');
+
+    const quantityButton = page.getByRole('button', { name: '수량 직접 입력' });
+    await quantityButton.click();
+    const quantityInput = page.locator('input[type="number"]');
+    await quantityInput.fill('5');
+    await quantityInput.press('Enter');
+    await expect(quantityButton).toHaveText('5');
+
+    await quantityButton.click();
+    await quantityInput.fill('0');
+    await quantityInput.press('Enter');
+    await expect(quantityButton).toHaveText('5');
   });
 });

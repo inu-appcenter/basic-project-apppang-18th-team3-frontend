@@ -13,6 +13,7 @@ interface CheckoutState {
   setItems: (items: CheckoutItem[]) => void;
   setAddressId: (addressId: number) => void;
   updateQuantity: (productId: number, delta: number) => void;
+  setQuantity: (productId: number, quantity: number) => void;
 }
 
 export const useCheckoutStore = create<CheckoutState>((set) => ({
@@ -29,5 +30,11 @@ export const useCheckoutStore = create<CheckoutState>((set) => ({
             : item,
         )
         .filter((item) => item.quantity > 0),
+    })),
+  setQuantity: (productId, quantity) =>
+    set((state) => ({
+      items: state.items.map((item) =>
+        item.productId === productId ? { ...item, quantity: Math.max(1, quantity) } : item,
+      ),
     })),
 }));
