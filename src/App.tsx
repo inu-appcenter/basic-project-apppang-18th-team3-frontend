@@ -25,6 +25,7 @@ import RegisterPage from '@/pages/RegisterPage';
 import ReviewWritePage from '@/pages/ReviewWritePage';
 import SearchPage from '@/pages/SearchPage';
 import SettingsPage from '@/pages/SettingsPage';
+import WishlistPage from '@/pages/WishlistPage';
 import { useAuthStore } from '@/store/authStore';
 
 function App() {
@@ -61,6 +62,7 @@ function App() {
         <Route path="/mypage/addresses/:addressId/edit" element={<AddressFormPage />} />
         <Route path="/mypage/orders" element={<OrderListPage />} />
         <Route path="/mypage/orders/:orderId" element={<OrderDetailPage />} />
+        <Route path="/mypage/wishlist" element={<WishlistPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/checkout/address" element={<AddressSelectPage />} />
 
