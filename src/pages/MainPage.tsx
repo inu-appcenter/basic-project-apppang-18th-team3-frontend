@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Baby,
   Camera,
@@ -13,76 +14,74 @@ import {
   SprayCan,
   Tv,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { getBanners } from '@/api/banner';
 import RecentProductsSection from '@/components/RecentProductsSection';
 import type { BannerResponse } from '@/types/banner';
 
 // ─── Types ────────────────────────────────────────────────
-type Category = { id: number; label: string; path: string; icon: ReactNode };
+type Category = { id: number; label: string; path: string; icon: React.ReactNode };
 
 // ─── Constants ────────────────────────────────────────────
 const CATEGORIES: Category[] = [
   {
     id: 1,
     label: '식품',
-    path: '/products?category=식품',
+    path: '/products?categoryId=1&category=식품',
     icon: <Pizza size={36} strokeWidth={1.5} />,
   },
   {
     id: 2,
     label: '생활용품',
-    path: '/products?category=생활용품',
+    path: '/products?categoryId=2&category=생활용품',
     icon: <SprayCan size={36} strokeWidth={1.5} />,
   },
   {
     id: 3,
     label: '뷰티',
-    path: '/products?category=뷰티',
+    path: '/products?categoryId=3&category=뷰티',
     icon: <Sparkles size={36} strokeWidth={1.5} />,
   },
   {
     id: 4,
     label: '의류·잡화',
-    path: '/products?category=의류·잡화',
+    path: '/products?categoryId=4&category=의류·잡화',
     icon: <Shirt size={36} strokeWidth={1.5} />,
   },
   {
     id: 5,
     label: '가전·디지털',
-    path: '/products?category=가전·디지털',
+    path: '/products?categoryId=5&category=가전·디지털',
     icon: <Tv size={36} strokeWidth={1.5} />,
   },
   {
     id: 6,
     label: '홈인테리어',
-    path: '/products?category=홈인테리어',
+    path: '/products?categoryId=6&category=홈인테리어',
     icon: <Sofa size={36} strokeWidth={1.5} />,
   },
   {
     id: 7,
     label: '출산·유아',
-    path: '/products?category=출산·유아',
+    path: '/products?categoryId=7&category=출산·유아',
     icon: <Baby size={36} strokeWidth={1.5} />,
   },
   {
     id: 8,
     label: '반려동물',
-    path: '/products?category=반려동물',
+    path: '/products?categoryId=8&category=반려동물',
     icon: <PawPrint size={36} strokeWidth={1.5} />,
   },
   {
     id: 9,
     label: '스포츠·레저',
-    path: '/products?category=스포츠·레저',
+    path: '/products?categoryId=9&category=스포츠·레저',
     icon: <Dumbbell size={36} strokeWidth={1.5} />,
   },
   {
     id: 10,
     label: '자동차용품',
-    path: '/products?category=자동차용품',
+    path: '/products?categoryId=10&category=자동차용품',
     icon: <Car size={36} strokeWidth={1.5} />,
   },
 ];

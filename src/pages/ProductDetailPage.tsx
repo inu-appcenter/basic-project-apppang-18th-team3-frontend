@@ -1,4 +1,4 @@
-import { ChevronLeft, Heart, Pencil, Play, Share2, Star, ThumbsUp, X } from 'lucide-react';
+import { ChevronLeft, Heart, Pencil, Share2, Star, ThumbsUp, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -15,23 +15,19 @@ type Review = {
   id: number;
   rating: number;
   reviewer: string;
-  isVerified: boolean;
-  seller: string;
   date: string;
   text: string;
-  helpfulCount?: number;
+  images: string[];
 };
 
-// 실제 리뷰 응답엔 isVerified/seller/helpfulCount 필드가 없어 기본값으로 채운다.
 function toReview(item: ReviewItemResponse): Review {
   return {
     id: item.reviewId,
     rating: item.rating,
     reviewer: item.userName,
-    isVerified: false,
-    seller: '',
     date: item.createdAt.slice(0, 10).replace(/-/g, '.'),
     text: item.content,
+    images: item.images ?? [],
   };
 }
 
@@ -67,42 +63,37 @@ function StarGroup({ rating, size = 16 }: { rating: number; size?: number }) {
 
 function ReviewItem({ review }: { review: Review }) {
   return (
-    <div className="flex flex-col gap-2.5 border-t border-gray-200 px-3 py-3">
+    <div className="flex flex-col gap-3.5 border-t border-gray-200 px-3 py-4">
       {/* 헤더: 별점 + 이름 + 날짜 */}
       <div className="flex items-start justify-between">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <StarGroup rating={review.rating} size={16} />
-            <span className="text-body-10 text-black">{review.reviewer}</span>
-            {review.isVerified && (
-              <span className="text-body-12 rounded bg-[#00cc89] px-1.5 py-0.5 text-white">
-                실명리뷰어
-              </span>
-            )}
-          </div>
-          <p className="text-body-10 text-gray-300">판매자 : {review.seller}</p>
+        <div className="flex items-center gap-2">
+          <StarGroup rating={review.rating} size={16} />
+          <span className="text-body-10 text-black">{review.reviewer}</span>
         </div>
         <span className="text-body-10 text-gray-300">{review.date}</span>
       </div>
 
       {/* 리뷰 내용: 사진 + 텍스트 */}
-      <div className="flex gap-2">
-        <div className="h-20 w-20 shrink-0 bg-gray-200" />
+      <div className="flex gap-3">
+        {review.images.length > 0 ? (
+          <img
+            src={review.images[0]}
+            alt=""
+            className="h-20 w-20 shrink-0 rounded bg-gray-200 object-cover"
+          />
+        ) : (
+          <div className="h-20 w-20 shrink-0 rounded bg-gray-200" />
+        )}
         <p className="text-body-10 line-clamp-4 flex-1 text-black">{review.text}</p>
       </div>
-
-      {/* 더보기 */}
-      <button type="button" className="text-body-9 text-primary-200 w-fit font-semibold">
-        더보기
-      </button>
 
       {/* 도움이 돼요 버튼 */}
       <button
         type="button"
-        className="text-body-9 text-primary-200 flex w-fit items-center gap-1 rounded border border-gray-200 px-2 py-1.5 font-semibold"
+        className="text-body-9 text-primary-200 flex w-fit items-center gap-1 rounded border border-gray-200 px-2.5 py-2 font-semibold"
       >
         <ThumbsUp size={12} />
-        {review.helpfulCount ? `${review.helpfulCount}명에게 도움이 됐어요` : '도움이 돼요'}
+        도움이 돼요
       </button>
     </div>
   );
@@ -152,6 +143,7 @@ function ProductDetailPage() {
   }, [productId]);
 
   const hasMoreReviews = reviews.length < reviewTotal;
+  const reviewPhotos = reviews.flatMap((review) => review.images);
 
   const handleLoadMoreReviews = () => {
     if (!productId || isLoadingMoreReviews) return;
@@ -340,14 +332,14 @@ function ProductDetailPage() {
           </div>
 
           {/* 공유 아이콘 */}
-          <div className="flex items-center px-3 py-1.5">
+          <div className="flex items-center px-3 py-2.5">
             <button type="button" aria-label="공유하기" onClick={handleShare}>
               <Share2 size={24} className="text-black" />
             </button>
           </div>
 
           {/* 브랜드 */}
-          <div className="flex items-center gap-2.5 px-3 py-1">
+          <div className="flex items-center gap-3 px-3 py-2">
             <div className="h-8 w-8 shrink-0 rounded bg-gray-200" />
             <div className="flex flex-col gap-0.5">
               <span className="text-body-7 font-bold text-black">{product.brand}</span>
@@ -355,10 +347,10 @@ function ProductDetailPage() {
           </div>
 
           {/* 상품명: 16px regular */}
-          <p className="text-body-6 px-3 py-1.5 text-black">{product.name}</p>
+          <p className="text-body-6 px-3 py-2.5 text-black">{product.name}</p>
 
           {/* 가격: 할인뱃지 + 가격 + 원가 */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5">
+          <div className="flex items-center gap-2 px-3 py-2.5">
             {product.discountRate > 0 && (
               <span className="text-body-7 shrink-0 bg-red-300 px-3 font-bold text-white">
                 {product.discountRate}%
@@ -378,16 +370,16 @@ function ProductDetailPage() {
           <div className="h-2 bg-gray-100" />
 
           {/* 옵션 섹션 */}
-          <div className="flex flex-col gap-2.5 px-3 py-2.5">
+          <div className="flex flex-col gap-3.5 px-3 py-3.5">
             {/* 옵션 타이틀 */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <span className="text-body-10 text-black">색상</span>
               <X size={12} className="text-gray-300" />
               <span className="text-body-10 text-black">수량</span>
             </div>
 
             {/* 색상 선택 (가로 스크롤) */}
-            <div className="scrollbar-hide flex gap-2.5 overflow-x-auto pb-1">
+            <div className="scrollbar-hide flex gap-3 overflow-x-auto pb-1">
               {COLOR_OPTIONS.map((color, idx) => (
                 <button
                   key={color}
@@ -400,7 +392,7 @@ function ProductDetailPage() {
                   <div className="bg-primary-100 flex h-16.25 w-full items-center justify-center">
                     <span className="text-body-10 text-black">이미지</span>
                   </div>
-                  <div className="flex items-center justify-center px-2 py-1">
+                  <div className="flex items-center justify-center px-2 py-1.5">
                     <span
                       className={`text-body-10 text-center leading-tight ${
                         selectedColor === idx ? 'font-semibold' : ''
@@ -420,10 +412,10 @@ function ProductDetailPage() {
                   key={opt.qty}
                   type="button"
                   onClick={() => setSelectedQty(idx)}
-                  className="flex items-start gap-6 py-2 text-left"
+                  className="flex items-start gap-6 py-3 text-left"
                 >
                   {/* 라디오 + 수량 */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
                     <span
                       className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
                         selectedQty === idx
@@ -441,8 +433,8 @@ function ProductDetailPage() {
                   </div>
 
                   {/* 할인 정보 */}
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-1">
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center gap-1.5">
                       <span className="text-body-10 text-black">{opt.discount}</span>
                       <span className="text-body-7 text-secondary-200 font-bold">로켓</span>
                     </div>
@@ -454,11 +446,11 @@ function ProductDetailPage() {
           </div>
 
           {/* 상품정보 */}
-          <div className="flex items-center px-3 py-2">
+          <div className="flex items-center px-3 py-3">
             <h2 className="text-body-5 font-bold text-black">상품정보</h2>
           </div>
           <div className="h-2 bg-gray-100" />
-          <p className="text-body-10 px-3 py-2 whitespace-pre-wrap text-black">
+          <p className="text-body-10 px-3 py-3.5 whitespace-pre-wrap text-black">
             {product.description}
           </p>
           {product.detailImages.map((imageUrl) => (
@@ -469,17 +461,17 @@ function ProductDetailPage() {
           <div className="h-2 bg-gray-100" />
 
           {/* 상품 리뷰 헤더 */}
-          <div className="flex items-center px-3 py-3">
+          <div className="flex items-center px-3 py-4">
             <h2 className="text-body-5 font-bold text-black">상품 리뷰</h2>
           </div>
 
           {/* 리뷰 요약 */}
-          <div className="flex flex-col gap-2.5 px-3 pb-2.5">
+          <div className="flex flex-col gap-3 px-3 pb-3.5">
             <p className="text-body-10 text-gray-300">
               동일한 상품에 대해 작성된 상품평으로, 판매자는 다를 수 있습니다.
             </p>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 <StarGroup rating={product.reviewSummary.averageRating} size={16} />
                 <span className="text-body-7 font-bold text-black">
                   {product.reviewSummary.reviewCount.toLocaleString()}
@@ -491,7 +483,7 @@ function ProductDetailPage() {
                 onClick={() => {
                   if (!isLoggedIn) navigate('/login');
                 }}
-                className="text-body-9 text-primary-200 flex items-center gap-1 font-semibold disabled:text-gray-200"
+                className="text-body-9 text-primary-200 flex items-center gap-1.5 font-semibold disabled:text-gray-200"
               >
                 <Pencil size={12} />
                 리뷰 작성하기
@@ -504,38 +496,37 @@ function ProductDetailPage() {
             )}
           </div>
 
-          {/* 사진/동영상 */}
-          <div className="flex items-center px-3 py-2">
-            <h2 className="text-body-5 font-bold text-black">사진/동영상</h2>
-          </div>
-
-          {/* 포토 그리드: 4열 */}
-          <div className="grid grid-cols-4 gap-1 px-3">
-            {/* 동영상 썸네일 */}
-            <div className="relative aspect-square bg-gray-200">
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-                <Play size={24} className="fill-white text-white" />
-                <span className="text-body-10 text-white">0:14</span>
+          {/* 사진/동영상 (리뷰에 첨부된 사진만 모아서 보여줌) */}
+          {reviewPhotos.length > 0 && (
+            <>
+              <div className="flex items-center px-3 py-3">
+                <h2 className="text-body-5 font-bold text-black">사진/동영상</h2>
               </div>
-            </div>
-            {/* 사진 6개 */}
-            {Array.from({ length: 6 }, (_, i) => (
-              <div key={i} className="aspect-square bg-gray-200" />
-            ))}
-            {/* 더보기 타일 */}
-            <div className="bg-primary-200 flex aspect-square flex-col items-center justify-center">
-              <span className="text-title-5 font-bold text-white">270</span>
-              <span className="text-body-7 font-bold text-white">더보기</span>
-            </div>
-          </div>
+              <div className="grid grid-cols-4 gap-1.5 px-3">
+                {reviewPhotos.map((imageUrl) => (
+                  <img
+                    key={imageUrl}
+                    src={imageUrl}
+                    alt=""
+                    loading="lazy"
+                    className="aspect-square w-full rounded object-cover"
+                  />
+                ))}
+              </div>
+            </>
+          )}
 
           {/* 리뷰 아이템 */}
-          {reviews.map((review) => (
-            <ReviewItem key={review.id} review={review} />
-          ))}
+          {reviews.length === 0 ? (
+            <p className="text-body-9 px-3 py-12 text-center text-gray-300">
+              아직 작성된 리뷰가 없습니다
+            </p>
+          ) : (
+            reviews.map((review) => <ReviewItem key={review.id} review={review} />)
+          )}
 
           {/* 리뷰 더보기 버튼 */}
-          <div className="px-3 py-2">
+          <div className="px-3 py-3">
             {hasMoreReviews ? (
               <button
                 type="button"
@@ -555,14 +546,14 @@ function ProductDetailPage() {
           </div>
 
           {/* 하단 여백 (액션바 높이만큼) */}
-          <div className="h-16.75" />
+          <div className="h-18.75" />
         </main>
 
         {/* 장바구니 담기 결과 토스트 */}
         <Toast message={cartMessage} onClose={() => setCartMessage(null)} />
 
         {/* 하단 액션 바: h=67, px=12, py=12 */}
-        <div className="flex shrink-0 items-center gap-2 border-t border-gray-200 px-3 py-3">
+        <div className="flex shrink-0 items-center gap-3 border-t border-gray-200 px-3 py-4">
           <button
             type="button"
             onClick={handleAddToCart}
