@@ -16,6 +16,7 @@ import { checkEmail, login, signup } from '@/api/auth';
 import CheckBox from '@/components/CheckBox';
 import Toast from '@/components/Toast';
 import { useAuthStore } from '@/store/authStore';
+import { formatPhone } from '@/utils/phone';
 
 // ─── Constants ────────────────────────────────────────────
 const TERMS = [
@@ -35,13 +36,6 @@ const TERMS = [
 type TermId = (typeof TERMS)[number]['id'];
 
 // ─── Helpers ──────────────────────────────────────────────
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 11);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
-  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
-}
-
 const isEmailFormat = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 const isPasswordValid = (v: string) => /^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(v);
 const isNameValid = (v: string) => /^[가-힣a-zA-Z]{2,}$/.test(v);
