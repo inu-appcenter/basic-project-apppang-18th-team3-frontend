@@ -1,5 +1,5 @@
 import { ChevronLeft, Heart, Pencil, Share2, Star, ThumbsUp, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { addToCart } from '@/api/cart';
@@ -61,7 +61,7 @@ function StarGroup({ rating, size = 16 }: { rating: number; size?: number }) {
   );
 }
 
-function ReviewItem({ review }: { review: Review }) {
+const ReviewItem = memo(function ReviewItemInner({ review }: { review: Review }) {
   return (
     <div className="flex flex-col gap-3.5 border-t border-gray-200 px-3 py-4">
       {/* 헤더: 별점 + 이름 + 날짜 */}
@@ -79,6 +79,8 @@ function ReviewItem({ review }: { review: Review }) {
           <img
             src={review.images[0]}
             alt=""
+            loading="lazy"
+            decoding="async"
             className="h-20 w-20 shrink-0 rounded bg-gray-200 object-cover"
           />
         ) : (
@@ -97,7 +99,7 @@ function ReviewItem({ review }: { review: Review }) {
       </button>
     </div>
   );
-}
+});
 
 // ─── Page ─────────────────────────────────────────────────
 function ProductDetailPage() {

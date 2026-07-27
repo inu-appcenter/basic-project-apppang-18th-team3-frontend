@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronLeft, Star } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { getProducts } from '@/api/product';
@@ -83,7 +83,7 @@ function StarRow({
   );
 }
 
-function ProductCard({ product }: { product: Product }) {
+const ProductCard = memo(function ProductCardInner({ product }: { product: Product }) {
   const navigate = useNavigate();
   const hasDiscount = !!product.discountRate;
 
@@ -98,6 +98,8 @@ function ProductCard({ product }: { product: Product }) {
         <img
           src={product.imageUrl}
           alt=""
+          loading="lazy"
+          decoding="async"
           className="h-30 w-30 shrink-0 bg-gray-200 object-cover"
         />
       ) : (
@@ -163,7 +165,7 @@ function ProductCard({ product }: { product: Product }) {
       </div>
     </button>
   );
-}
+});
 
 // ─── Page ─────────────────────────────────────────────────
 function ProductListPage() {

@@ -14,7 +14,13 @@ function RecentProductCard({ product }: { product: RecentProductItem }) {
       className="flex w-25 shrink-0 flex-col gap-1 text-left"
     >
       {product.imageUrl ? (
-        <img src={product.imageUrl} alt="" className="h-25 w-25 bg-gray-200 object-cover" />
+        <img
+          src={product.imageUrl}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="h-25 w-25 bg-gray-200 object-cover"
+        />
       ) : (
         <div className="h-25 w-25 bg-gray-200" />
       )}
