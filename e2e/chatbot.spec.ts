@@ -24,6 +24,8 @@ test.describe('챗봇 페이지', () => {
     await page.getByPlaceholder('메시지를 입력하세요...').fill('안녕');
     await page.getByPlaceholder('메시지를 입력하세요...').press('Enter');
 
-    await expect(page.getByText('죄송해요, 아직 해당 질문에 대한 답변을 준비 중이에요')).toBeVisible();
+    await expect(
+      page.getByText('죄송해요, 아직 해당 질문에 대한 답변을 준비 중이에요'),
+    ).toBeVisible();
   });
 });

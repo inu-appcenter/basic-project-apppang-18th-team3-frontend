@@ -43,10 +43,18 @@ const REVIEW_LIST = {
 test.describe('상품 상세 페이지', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/products/42', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(PRODUCT_DETAIL) }),
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(PRODUCT_DETAIL),
+      }),
     );
     await page.route('**/api/products/42/reviews*', (route) =>
-      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(REVIEW_LIST) }),
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(REVIEW_LIST),
+      }),
     );
   });
 

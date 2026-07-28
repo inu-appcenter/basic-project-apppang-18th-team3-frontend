@@ -1,6 +1,6 @@
-import { Outlet } from 'react-router-dom'
-import Header from '@/components/Header'
-import NavigationBar from '@/components/NavigationBar'
+import { Outlet } from 'react-router-dom';
+import Header from '@/components/Header';
+import NavigationBar from '@/components/NavigationBar';
 
 function CommonLayout() {
   return (
@@ -13,7 +13,7 @@ function CommonLayout() {
         <NavigationBar />
       </div>
     </div>
-  )
+  );
 }
 
-export default CommonLayout
+export default CommonLayout;

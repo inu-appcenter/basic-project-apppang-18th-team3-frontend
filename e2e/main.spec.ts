@@ -7,7 +7,12 @@ test.describe('메인 페이지', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify([
-          { id: 1, imageUrl: 'https://example.com/banner1.jpg', linkUrl: '/products?category=1', displayOrder: 1 },
+          {
+            id: 1,
+            imageUrl: 'https://example.com/banner1.jpg',
+            linkUrl: '/products?category=1',
+            displayOrder: 1,
+          },
         ]),
       }),
     );
