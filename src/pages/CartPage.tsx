@@ -212,7 +212,7 @@ function CartPage() {
   const [pendingDeleteId, setPendingDeleteId] = useState<number | 'checked' | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
+  const fetchCart = useCallback(() => {
     setIsLoading(true);
     setError(false);
     getCart()
@@ -224,6 +224,10 @@ function CartPage() {
       .catch(() => setError(true))
       .finally(() => setIsLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchCart();
+  }, [fetchCart]);
 
   const showToast = useCallback((message: string) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -370,8 +374,15 @@ function CartPage() {
         )}
 
         {!isLoading && error && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2">
+          <div className="flex flex-1 flex-col items-center justify-center gap-3">
             <p className="text-body-7 text-black">장바구니를 불러오지 못했습니다.</p>
+            <button
+              type="button"
+              onClick={fetchCart}
+              className="text-body-9 border-primary-200 text-primary-200 rounded border px-4 py-2 font-semibold"
+            >
+              다시 시도
+            </button>
           </div>
         )}
 
