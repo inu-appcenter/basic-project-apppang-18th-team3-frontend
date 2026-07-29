@@ -93,6 +93,7 @@ function MainPage() {
   const [currentBanner, setCurrentBanner] = useState(0);
   const dragStartX = useRef(0);
   const isDragging = useRef(false);
+  const hasDragged = useRef(false);
 
   useEffect(() => {
     getBanners()
@@ -111,6 +112,7 @@ function MainPage() {
   const handleDragStart = (clientX: number) => {
     dragStartX.current = clientX;
     isDragging.current = true;
+    hasDragged.current = false;
   };
 
   const handleDragEnd = (clientX: number) => {
@@ -118,6 +120,7 @@ function MainPage() {
     isDragging.current = false;
     const diff = dragStartX.current - clientX;
     if (Math.abs(diff) > 50) {
+      hasDragged.current = true;
       setCurrentBanner((prev) =>
         diff > 0 ? (prev + 1) % banners.length : (prev - 1 + banners.length) % banners.length,
       );
@@ -156,12 +159,16 @@ function MainPage() {
           <button
             type="button"
             aria-label={`배너 ${currentBanner + 1} 이동`}
-            onClick={() => navigate(banners[currentBanner].linkUrl)}
+            onClick={() => {
+              if (hasDragged.current) return;
+              navigate(banners[currentBanner].linkUrl);
+            }}
             className="flex h-full w-full items-center justify-center"
           >
             <img
               src={banners[currentBanner].imageUrl}
               alt=""
+              draggable={false}
               className="h-full w-full object-cover"
             />
           </button>
