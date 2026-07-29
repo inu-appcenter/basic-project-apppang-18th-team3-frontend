@@ -89,9 +89,13 @@ function ChatbotPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showQuickReplies, setShowQuickReplies] = useState(true);
+  const skipSmoothScrollRef = useRef(false);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    bottomRef.current?.scrollIntoView({
+      behavior: skipSmoothScrollRef.current ? 'auto' : 'smooth',
+    });
+    skipSmoothScrollRef.current = false;
   }, [messages, isLoading]);
 
   useEffect(() => {
@@ -99,10 +103,14 @@ function ChatbotPage() {
     getChatHistory()
       .then((history) => {
         if (history.length === 0) return;
+        const sorted = [...history].sort(
+          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        );
         setShowQuickReplies(false);
+        skipSmoothScrollRef.current = true;
         setMessages((prev) => [
           ...prev,
-          ...history.map((item, index) => ({
+          ...sorted.map((item, index) => ({
             id: `history-${index}-${item.createdAt}`,
             role: (item.role === 'user' ? 'user' : 'bot') as Message['role'],
             text: item.message,
