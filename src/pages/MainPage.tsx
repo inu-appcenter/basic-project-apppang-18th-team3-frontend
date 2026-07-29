@@ -176,10 +176,11 @@ function MainPage() {
     if (!isSnapping) return;
     setIsSnapping(false);
     interactingRef.current = false;
-    if (pendingDirRef.current !== 0 && banners.length > 0) {
-      setCurrentBanner((prev) => (prev + pendingDirRef.current + banners.length) % banners.length);
-    }
+    const dir = pendingDirRef.current;
     pendingDirRef.current = 0;
+    if (dir !== 0 && banners.length > 0) {
+      setCurrentBanner((prev) => (prev + dir + banners.length) % banners.length);
+    }
     setDragDelta(0);
   };
 
