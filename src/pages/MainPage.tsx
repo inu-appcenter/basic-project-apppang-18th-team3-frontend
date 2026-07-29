@@ -91,8 +91,14 @@ function MainPage() {
   const navigate = useNavigate();
   const [banners, setBanners] = useState<BannerResponse[]>([]);
   const [currentBanner, setCurrentBanner] = useState(0);
+  const [dragDelta, setDragDelta] = useState(0);
+  const [isSnapping, setIsSnapping] = useState(false);
+  const [sliderWidth, setSliderWidth] = useState(0);
+  const sliderRef = useRef<HTMLDivElement>(null);
   const dragStartX = useRef(0);
   const isDragging = useRef(false);
+  const interactingRef = useRef(false);
+  const pendingDirRef = useRef(0);
 
   useEffect(() => {
     getBanners()
@@ -101,28 +107,84 @@ function MainPage() {
   }, []);
 
   useEffect(() => {
+    const el = sliderRef.current;
+    if (!el) return undefined;
+    const updateWidth = () => setSliderWidth(el.offsetWidth);
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     if (banners.length === 0) return undefined;
     const timer = setInterval(() => {
+      if (interactingRef.current) return;
       setCurrentBanner((prev) => (prev + 1) % banners.length);
     }, 3000);
     return () => clearInterval(timer);
   }, [banners.length]);
 
   const handleDragStart = (clientX: number) => {
+    if (banners.length === 0) return;
     dragStartX.current = clientX;
     isDragging.current = true;
+    interactingRef.current = true;
+    setIsSnapping(false);
+    setDragDelta(0);
   };
 
-  const handleDragEnd = (clientX: number) => {
-    if (!isDragging.current || banners.length === 0) return;
-    isDragging.current = false;
-    const diff = dragStartX.current - clientX;
-    if (Math.abs(diff) > 50) {
-      setCurrentBanner((prev) =>
-        diff > 0 ? (prev + 1) % banners.length : (prev - 1 + banners.length) % banners.length,
-      );
-    }
+  const handleDragMove = (clientX: number) => {
+    if (!isDragging.current) return;
+    setDragDelta(clientX - dragStartX.current);
   };
+
+  const handleDragEnd = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    const threshold = sliderWidth * 0.2;
+    const shouldAdvance = Math.abs(dragDelta) > threshold;
+    const draggedRight = dragDelta > 0;
+    let target = 0;
+    if (shouldAdvance) target = draggedRight ? sliderWidth : -sliderWidth;
+    pendingDirRef.current = 0;
+    if (shouldAdvance) pendingDirRef.current = draggedRight ? -1 : 1;
+    if (target === dragDelta) {
+      // 이동량 0 → transitionend가 발생하지 않으므로 즉시 종료 처리
+      interactingRef.current = false;
+      pendingDirRef.current = 0;
+      setDragDelta(0);
+      return;
+    }
+    setIsSnapping(true);
+    setDragDelta(target);
+  };
+
+  const handleDragCancel = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    pendingDirRef.current = 0;
+    if (dragDelta === 0) {
+      interactingRef.current = false;
+      return;
+    }
+    setIsSnapping(true);
+    setDragDelta(0);
+  };
+
+  const handleTrackTransitionEnd = () => {
+    if (!isSnapping) return;
+    setIsSnapping(false);
+    interactingRef.current = false;
+    if (pendingDirRef.current !== 0 && banners.length > 0) {
+      setCurrentBanner((prev) => (prev + pendingDirRef.current + banners.length) % banners.length);
+    }
+    pendingDirRef.current = 0;
+    setDragDelta(0);
+  };
+
+  const prevBanner = banners.length > 0 ? (currentBanner - 1 + banners.length) % banners.length : 0;
+  const nextBanner = banners.length > 0 ? (currentBanner + 1) % banners.length : 0;
 
   return (
     <div className="flex flex-col gap-3 pb-4">
@@ -143,23 +205,38 @@ function MainPage() {
 
       {/* 배너 슬라이더 — 176px, Secondary-100 bg */}
       <div
+        ref={sliderRef}
         className="bg-secondary-100 relative aspect-390/176 w-full cursor-grab overflow-hidden select-none"
         onPointerDown={(e) => handleDragStart(e.clientX)}
-        onPointerUp={(e) => handleDragEnd(e.clientX)}
-        onPointerLeave={() => {
-          isDragging.current = false;
-        }}
+        onPointerMove={(e) => handleDragMove(e.clientX)}
+        onPointerUp={handleDragEnd}
+        onPointerLeave={handleDragCancel}
+        onPointerCancel={handleDragCancel}
         role="region"
         aria-label="배너 슬라이더"
       >
         {banners.length > 0 ? (
-          <div className="flex h-full w-full items-center justify-center">
-            <img
-              src={banners[currentBanner].imageUrl}
-              alt=""
-              draggable={false}
-              className="h-full w-full object-cover"
-            />
+          <div
+            className={`flex h-full ${isSnapping ? 'transition-transform duration-300 ease-out' : ''}`}
+            style={{ transform: `translateX(${-sliderWidth + dragDelta}px)` }}
+            onTransitionEnd={handleTrackTransitionEnd}
+          >
+            {(
+              [
+                ['prev', prevBanner],
+                ['current', currentBanner],
+                ['next', nextBanner],
+              ] as const
+            ).map(([slot, idx]) => (
+              <div key={slot} className="h-full w-full shrink-0">
+                <img
+                  src={banners[idx].imageUrl}
+                  alt=""
+                  draggable={false}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ))}
           </div>
         ) : (
           <div className="flex h-full items-center justify-center" />
