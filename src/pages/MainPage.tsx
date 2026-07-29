@@ -143,7 +143,7 @@ function MainPage() {
 
       {/* 배너 슬라이더 — 176px, Secondary-100 bg */}
       <div
-        className="bg-secondary-100 relative h-44 cursor-grab overflow-hidden select-none"
+        className="bg-secondary-100 relative aspect-390/176 w-full cursor-grab overflow-hidden select-none"
         onPointerDown={(e) => handleDragStart(e.clientX)}
         onPointerUp={(e) => handleDragEnd(e.clientX)}
         onPointerLeave={() => {
