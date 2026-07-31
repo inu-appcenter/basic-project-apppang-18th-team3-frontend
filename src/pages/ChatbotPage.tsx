@@ -1,15 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, SendHorizontal } from 'lucide-react';
 
 import { getChatHistory, sendChatMessage } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
+import type { ChatHistoryItem, ChatRecommendedProduct } from '@/types/chat';
+
+const HISTORY_PAGE_SIZE = 10;
 
 type Message = {
   id: string;
   role: 'bot' | 'user';
   text: string;
   time: string;
+  recommendedProducts?: ChatRecommendedProduct[];
 };
 
 const QUICK_REPLIES = [
@@ -30,6 +34,15 @@ function getTime(date: Date = new Date()) {
   const hour = h % 12 || 12;
   const min = String(m).padStart(2, '0');
   return `${ampm} ${hour}:${min}`;
+}
+
+function toMessage(item: ChatHistoryItem, key: string): Message {
+  return {
+    id: `history-${key}`,
+    role: item.role === 'user' ? 'user' : 'bot',
+    text: item.message,
+    time: getTime(new Date(item.createdAt)),
+  };
 }
 
 function BotBubble({ text, time }: { text: string; time: string }) {
@@ -71,10 +84,49 @@ function LoadingBubble() {
   );
 }
 
+function RecommendedProducts({
+  products,
+  onSelect,
+}: {
+  products: ChatRecommendedProduct[];
+  onSelect: (productId: number) => void;
+}) {
+  if (products.length === 0) return null;
+  return (
+    <div className="scrollbar-hide ml-10 flex gap-2 overflow-x-auto pb-1">
+      {products.map((product) => (
+        <button
+          key={product.productId}
+          type="button"
+          onClick={() => onSelect(product.productId)}
+          className="flex w-22 shrink-0 flex-col gap-1 text-left"
+        >
+          {product.imageUrl ? (
+            <img
+              src={product.imageUrl}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="h-22 w-22 bg-gray-200 object-cover"
+            />
+          ) : (
+            <div className="h-22 w-22 bg-gray-200" />
+          )}
+          <p className="text-body-10 line-clamp-1 text-black">{product.name}</p>
+          <span className="text-body-10 font-semibold text-black">
+            {product.price.toLocaleString()}원
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function ChatbotPage() {
   const navigate = useNavigate();
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [sessionId] = useState(() => crypto.randomUUID());
 
@@ -89,37 +141,70 @@ function ChatbotPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showQuickReplies, setShowQuickReplies] = useState(true);
-  const skipSmoothScrollRef = useRef(false);
+  const [historyCursor, setHistoryCursor] = useState<number | null>(null);
+  const [hasMoreHistory, setHasMoreHistory] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  // 새 메시지는 최하단으로 smooth 스크롤, 이력 최초 로드는 auto로 즉시 이동(끊김 방지),
+  // 위로 스크롤한 과거 이력 추가 로드는 스크롤 위치를 그대로 유지(preserve)한다.
+  const scrollModeRef = useRef<'bottom-smooth' | 'bottom-auto' | 'preserve'>('bottom-smooth');
+  const prevScrollHeightRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({
-      behavior: skipSmoothScrollRef.current ? 'auto' : 'smooth',
-    });
-    skipSmoothScrollRef.current = false;
+  useLayoutEffect(() => {
+    const container = scrollContainerRef.current;
+    const mode = scrollModeRef.current;
+    if (mode === 'preserve') {
+      if (container && prevScrollHeightRef.current !== null) {
+        container.scrollTop = container.scrollHeight - prevScrollHeightRef.current;
+      }
+      prevScrollHeightRef.current = null;
+    } else {
+      bottomRef.current?.scrollIntoView({ behavior: mode === 'bottom-auto' ? 'auto' : 'smooth' });
+    }
+    scrollModeRef.current = 'bottom-smooth';
   }, [messages, isLoading]);
 
   useEffect(() => {
     if (!isLoggedIn) return;
-    getChatHistory()
-      .then((history) => {
-        if (history.length === 0) return;
-        const sorted = [...history].sort(
-          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-        );
+    getChatHistory({ size: HISTORY_PAGE_SIZE })
+      .then((res) => {
+        setHistoryCursor(res.nextCursor);
+        setHasMoreHistory(res.hasNext);
+        if (res.messages.length === 0) return;
         setShowQuickReplies(false);
-        skipSmoothScrollRef.current = true;
+        scrollModeRef.current = 'bottom-auto';
         setMessages((prev) => [
           ...prev,
-          ...sorted.map((item, index) => ({
-            id: `history-${index}-${item.createdAt}`,
-            role: (item.role === 'user' ? 'user' : 'bot') as Message['role'],
-            text: item.message,
-            time: getTime(new Date(item.createdAt)),
-          })),
+          ...res.messages.map((item, index) => toMessage(item, `${index}-${item.createdAt}`)),
         ]);
       })
       .catch(() => {});
   }, [isLoggedIn]);
+
+  const loadMoreHistory = useCallback(() => {
+    if (!hasMoreHistory || isLoadingHistory || historyCursor === null) return;
+    prevScrollHeightRef.current = scrollContainerRef.current?.scrollHeight ?? null;
+    setIsLoadingHistory(true);
+    getChatHistory({ cursor: historyCursor, size: HISTORY_PAGE_SIZE })
+      .then((res) => {
+        scrollModeRef.current = 'preserve';
+        setMessages((prev) => [
+          ...res.messages.map((item, index) =>
+            toMessage(item, `${historyCursor}-${index}-${item.createdAt}`),
+          ),
+          ...prev,
+        ]);
+        setHistoryCursor(res.nextCursor);
+        setHasMoreHistory(res.hasNext);
+      })
+      .catch(() => setHasMoreHistory(false))
+      .finally(() => setIsLoadingHistory(false));
+  }, [hasMoreHistory, isLoadingHistory, historyCursor]);
+
+  const handleScroll = () => {
+    const container = scrollContainerRef.current;
+    if (!container || container.scrollTop > 60) return;
+    loadMoreHistory();
+  };
 
   const sendMessage = (text: string) => {
     const trimmed = text.trim();
@@ -147,6 +232,7 @@ function ChatbotPage() {
           role: 'bot',
           text: res.reply,
           time: getTime(),
+          recommendedProducts: res.recommendedProducts,
         };
         setMessages((prev) => [...prev, botMsg]);
       })
@@ -194,11 +280,29 @@ function ChatbotPage() {
         </div>
 
         {/* 채팅 영역 */}
-        <div className="flex-1 overflow-y-auto px-3 py-2.5">
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto px-3 py-2.5"
+        >
+          {isLoadingHistory && (
+            <p className="text-body-10 py-2 text-center text-gray-300">
+              이전 대화를 불러오는 중...
+            </p>
+          )}
+
           <div className="flex flex-col gap-2.5">
             {messages.map((msg) =>
               msg.role === 'bot' ? (
-                <BotBubble key={msg.id} text={msg.text} time={msg.time} />
+                <div key={msg.id} className="flex flex-col gap-2">
+                  <BotBubble text={msg.text} time={msg.time} />
+                  {msg.recommendedProducts && (
+                    <RecommendedProducts
+                      products={msg.recommendedProducts}
+                      onSelect={(productId) => navigate(`/products/${productId}`)}
+                    />
+                  )}
+                </div>
               ) : (
                 <UserBubble key={msg.id} text={msg.text} time={msg.time} />
               ),

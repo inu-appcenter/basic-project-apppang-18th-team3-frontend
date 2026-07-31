@@ -23,7 +23,17 @@ function WishlistCard({
         onClick={onOpen}
         aria-label={item.productName}
         className="h-20 w-20 shrink-0 bg-gray-200"
-      />
+      >
+        {item.imageUrl && (
+          <img
+            src={item.imageUrl}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
+        )}
+      </button>
       <button
         type="button"
         onClick={onOpen}

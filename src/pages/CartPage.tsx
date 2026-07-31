@@ -18,6 +18,7 @@ type CartItem = {
   price: number;
   quantity: number;
   subtotal: number;
+  imageUrl: string | null;
 };
 
 function toCartItem(res: CartItemResponse): CartItem {
@@ -28,6 +29,7 @@ function toCartItem(res: CartItemResponse): CartItem {
     price: res.price,
     quantity: res.quantity,
     subtotal: res.subtotal,
+    imageUrl: res.imageUrl,
   };
 }
 
@@ -181,7 +183,17 @@ function CartItemCard({
       {/* 상품 내용: 이미지 + 정보 */}
       <div className="flex gap-3 px-3 py-2.5">
         {/* 이미지: 80×92 */}
-        <div className="h-23 w-20 shrink-0 bg-gray-200" />
+        {item.imageUrl ? (
+          <img
+            src={item.imageUrl}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="h-23 w-20 shrink-0 bg-gray-200 object-cover"
+          />
+        ) : (
+          <div className="h-23 w-20 shrink-0 bg-gray-200" />
+        )}
 
         {/* 정보 */}
         <div className="flex flex-1 flex-col gap-2">

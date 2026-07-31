@@ -131,7 +131,17 @@ function OrderDetailPage() {
                   <div key={item.orderItemId} className="flex flex-col gap-1.5 py-2">
                     <span className="text-[12px] font-extrabold text-black">{item.status}</span>
                     <div className="flex items-center gap-2.75">
-                      <div className="size-12.5 shrink-0 bg-gray-200" />
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          className="size-12.5 shrink-0 bg-gray-200 object-cover"
+                        />
+                      ) : (
+                        <div className="size-12.5 shrink-0 bg-gray-200" />
+                      )}
                       <div className="flex flex-1 flex-col gap-0.75 text-[12px] text-black">
                         <p className="line-clamp-1 font-medium">{item.productName}</p>
                         <p className="font-medium">

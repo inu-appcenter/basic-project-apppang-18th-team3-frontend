@@ -5,6 +5,7 @@ export interface CartItemResponse {
   price: number;
   quantity: number;
   subtotal: number;
+  imageUrl: string | null;
 }
 
 export interface CartResponse {

@@ -14,6 +14,7 @@ export interface OrderItemInfo {
   quantity: number;
   price: number;
   status: string;
+  imageUrl: string | null;
 }
 
 export interface OrderSummaryResponse {

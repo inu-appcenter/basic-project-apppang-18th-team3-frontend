@@ -1,8 +1,8 @@
 import instance from '@/api/instance';
-import type { ChatHistoryItem, ChatRequest, ChatResponse } from '@/types/chat';
+import type { ChatHistoryResponse, ChatRequest, ChatResponse } from '@/types/chat';
 
-export const getChatHistory = async () => {
-  const { data } = await instance.get<ChatHistoryItem[]>('/api/chat/history');
+export const getChatHistory = async (params?: { cursor?: number; size?: number }) => {
+  const { data } = await instance.get<ChatHistoryResponse>('/api/chat/history', { params });
   return data;
 };
 

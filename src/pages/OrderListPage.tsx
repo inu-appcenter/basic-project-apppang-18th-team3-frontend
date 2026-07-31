@@ -50,7 +50,17 @@ function OrderRow({
     <div className="flex flex-col gap-2.5 border-t border-gray-200 bg-white px-2.5 py-3">
       <span className={`text-[15px] font-bold ${STATUS_COLOR[status]}`}>{status}</span>
       <div className="flex items-center gap-2.5 px-2.5">
-        <div className="size-20 shrink-0 bg-gray-200" />
+        {row.item.imageUrl ? (
+          <img
+            src={row.item.imageUrl}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="size-20 shrink-0 bg-gray-200 object-cover"
+          />
+        ) : (
+          <div className="size-20 shrink-0 bg-gray-200" />
+        )}
         <div className="flex flex-1 flex-col gap-1 text-[15px] text-black">
           <p className="line-clamp-1 font-medium">{row.item.productName}</p>
           <p className="font-medium">

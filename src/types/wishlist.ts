@@ -5,6 +5,7 @@ export interface WishlistResponse {
   brand: string;
   price: number;
   rocketDelivery: boolean;
+  imageUrl: string | null;
 }
 
 export interface WishlistRequest {
