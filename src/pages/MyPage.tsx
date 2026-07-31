@@ -16,6 +16,7 @@ type OrderStatus = '배송완료' | '배송중' | '주문접수';
 type Order = {
   id: number;
   status: OrderStatus;
+  imageUrl: string | null;
 };
 
 // 백엔드 주문 status 값이 이 세 한글 라벨과 정확히 일치하는지 확인되지 않아
@@ -25,7 +26,7 @@ function toOrder(res: OrderSummaryResponse): Order {
   const status = (knownStatuses as string[]).includes(res.status)
     ? (res.status as OrderStatus)
     : '주문접수';
-  return { id: res.orderId, status };
+  return { id: res.orderId, status, imageUrl: res.items[0]?.imageUrl ?? null };
 }
 
 type QuickMenu = {
@@ -63,7 +64,17 @@ function OrderCard({ order, onClick }: { order: Order; onClick: () => void }) {
       className="flex h-[154px] w-[124px] shrink-0 flex-col gap-1 rounded-lg border border-gray-200 bg-white p-2 text-left"
     >
       <span className={`text-body-10 ${STATUS_COLOR[order.status]}`}>{order.status}</span>
-      <div className="mt-auto h-25 w-25 bg-gray-200" />
+      {order.imageUrl ? (
+        <img
+          src={order.imageUrl}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="mt-auto h-25 w-25 bg-gray-200 object-cover"
+        />
+      ) : (
+        <div className="mt-auto h-25 w-25 bg-gray-200" />
+      )}
     </button>
   );
 }
@@ -84,8 +95,8 @@ function MyPage() {
     getMe()
       .then(setMe)
       .catch(() => setMe(null));
-    getOrders()
-      .then((res) => setOrders(res.slice(0, 5).map(toOrder)))
+    getOrders({ size: 5 })
+      .then((res) => setOrders(res.map(toOrder)))
       .catch(() => setOrders([]));
   }, [isLoggedIn]);
 

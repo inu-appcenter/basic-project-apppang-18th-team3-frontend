@@ -1,6 +1,6 @@
 import instance from '@/api/instance';
 import type {
-  OrderSummaryResponse,
+  OrderListResponse,
   RecentProductsResponse,
   UpdateMeRequest,
   UpdateMeResponse,
@@ -14,9 +14,9 @@ export const getMe = async () => {
   return data;
 };
 
-export const getOrders = async () => {
-  const { data } = await instance.get<OrderSummaryResponse[]>('/api/orders');
-  return data;
+export const getOrders = async (params?: { page?: number; size?: number }) => {
+  const { data } = await instance.get<OrderListResponse>('/api/orders', { params });
+  return data.items;
 };
 
 export const updateMe = async (payload: UpdateMeRequest) => {

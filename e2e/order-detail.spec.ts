@@ -63,11 +63,11 @@ test('로그인 후 주문상세에서 주문 취소 버튼으로 주문을 취�
       }),
     }),
   );
-  await page.route('**/api/orders', (route) =>
+  await page.route(/\/api\/orders(\?.*)?$/, (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify([ORDER_SUMMARY]),
+      body: JSON.stringify({ page: 1, size: 10, total: 1, hasNext: false, items: [ORDER_SUMMARY] }),
     }),
   );
   await page.route('**/api/orders/77', (route) =>

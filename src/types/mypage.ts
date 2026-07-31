@@ -25,6 +25,14 @@ export interface OrderSummaryResponse {
   items: OrderItemInfo[];
 }
 
+export interface OrderListResponse {
+  page: number;
+  size: number;
+  total: number;
+  hasNext: boolean;
+  items: OrderSummaryResponse[];
+}
+
 export interface UpdateMeRequest {
   email?: string;
   name?: string;
