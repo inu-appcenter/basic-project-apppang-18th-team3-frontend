@@ -84,7 +84,7 @@ test.describe('체크아웃 페이지', () => {
         body: JSON.stringify([ADDRESS]),
       }),
     );
-    await page.route('**/api/orders/estimate', (route) =>
+    await page.route(/\/api\/orders\/estimate(\?.*)?$/, (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
