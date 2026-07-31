@@ -206,7 +206,7 @@ function CheckoutPage() {
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') e.currentTarget.blur();
                           }}
-                          className="w-8 px-1 text-center text-[10px] text-black outline-none"
+                          className="w-8 [appearance:textfield] px-1 text-center text-[10px] text-black outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                         />
                         <button
                           type="button"
