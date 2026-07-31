@@ -155,16 +155,13 @@ test.describe('체크아웃 페이지', () => {
     await page.getByRole('button', { name: '바로구매' }).click();
     await page.waitForURL('**/checkout');
 
-    const quantityButton = page.getByRole('button', { name: '수량 직접 입력' });
-    await quantityButton.click();
-    const quantityInput = page.locator('input[type="number"]');
+    const quantityInput = page.getByRole('spinbutton', { name: '수량 직접 입력' });
     await quantityInput.fill('5');
     await quantityInput.press('Enter');
-    await expect(quantityButton).toHaveText('5');
+    await expect(quantityInput).toHaveValue('5');
 
-    await quantityButton.click();
     await quantityInput.fill('0');
     await quantityInput.press('Enter');
-    await expect(quantityButton).toHaveText('5');
+    await expect(quantityInput).toHaveValue('5');
   });
 });

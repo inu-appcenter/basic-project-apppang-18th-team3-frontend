@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Minus, Plus } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { getAddresses } from '@/api/address';
@@ -15,9 +15,7 @@ function CheckoutPage() {
   const { items, addressId, setItems, setAddressId, updateQuantity, setQuantity } =
     useCheckoutStore();
 
-  const [editingProductId, setEditingProductId] = useState<number | null>(null);
-  const [editingValue, setEditingValue] = useState('');
-  const editingInputRef = useRef<HTMLInputElement>(null);
+  const [quantityDrafts, setQuantityDrafts] = useState<Record<number, string>>({});
   const [addresses, setAddresses] = useState<AddressResponse[]>([]);
   const [addressesLoaded, setAddressesLoaded] = useState(false);
   const [estimate, setEstimate] = useState<OrderEstimateResponse | null>(null);
@@ -51,26 +49,23 @@ function CheckoutPage() {
 
   const selectedAddress = addresses.find((a) => a.addressId === addressId) ?? null;
 
-  useEffect(() => {
-    if (editingProductId !== null) editingInputRef.current?.focus();
-  }, [editingProductId]);
-
   const changeQuantity = (productId: number, delta: number) => {
     updateQuantity(productId, delta);
   };
 
-  const startEditingQuantity = (productId: number, quantity: number) => {
-    setEditingProductId(productId);
-    setEditingValue(String(quantity));
-  };
-
-  const commitEditingQuantity = () => {
-    if (editingProductId === null) return;
-    const parsed = Number(editingValue);
-    if (Number.isInteger(parsed) && parsed > 0) {
-      setQuantity(editingProductId, parsed);
+  const commitQuantityDraft = (productId: number) => {
+    const draft = quantityDrafts[productId];
+    if (draft !== undefined) {
+      const parsed = Number(draft);
+      if (Number.isInteger(parsed) && parsed > 0) {
+        setQuantity(productId, parsed);
+      }
+      setQuantityDrafts((prev) => {
+        const next = { ...prev };
+        delete next[productId];
+        return next;
+      });
     }
-    setEditingProductId(null);
   };
 
   const handlePay = async () => {
@@ -196,29 +191,23 @@ function CheckoutPage() {
                         >
                           <Minus size={16} className="text-black" />
                         </button>
-                        {editingProductId === item.productId ? (
-                          <input
-                            ref={editingInputRef}
-                            type="number"
-                            min={1}
-                            value={editingValue}
-                            onChange={(e) => setEditingValue(e.target.value)}
-                            onBlur={commitEditingQuantity}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') e.currentTarget.blur();
-                            }}
-                            className="w-8 px-1 text-center text-[10px] text-black outline-none"
-                          />
-                        ) : (
-                          <button
-                            type="button"
-                            aria-label="수량 직접 입력"
-                            onClick={() => startEditingQuantity(item.productId, item.quantity)}
-                            className="px-2 text-[10px] text-black"
-                          >
-                            {item.quantity}
-                          </button>
-                        )}
+                        <input
+                          type="number"
+                          min={1}
+                          aria-label="수량 직접 입력"
+                          value={quantityDrafts[item.productId] ?? item.quantity}
+                          onChange={(e) =>
+                            setQuantityDrafts((prev) => ({
+                              ...prev,
+                              [item.productId]: e.target.value,
+                            }))
+                          }
+                          onBlur={() => commitQuantityDraft(item.productId)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') e.currentTarget.blur();
+                          }}
+                          className="w-8 px-1 text-center text-[10px] text-black outline-none"
+                        />
                         <button
                           type="button"
                           onClick={() => changeQuantity(item.productId, 1)}
