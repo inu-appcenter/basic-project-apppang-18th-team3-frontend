@@ -39,7 +39,7 @@ function getTime(date: Date = new Date()) {
 function toMessage(item: ChatHistoryItem, key: string): Message {
   return {
     id: `history-${key}`,
-    role: item.role === 'user' ? 'user' : 'bot',
+    role: item.role.toUpperCase() === 'USER' ? 'user' : 'bot',
     text: item.message,
     time: getTime(new Date(item.createdAt)),
   };
