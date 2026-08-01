@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { getAddresses } from '@/api/address';
 import { createOrder, estimateOrder } from '@/api/order';
+import { getProduct } from '@/api/product';
 import { useCheckoutStore } from '@/store/checkoutStore';
 import type { AddressResponse } from '@/types/address';
 import type { OrderEstimateResponse } from '@/types/order';
@@ -21,6 +22,7 @@ function CheckoutPage() {
   const [estimate, setEstimate] = useState<OrderEstimateResponse | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [imageMap, setImageMap] = useState<Record<number, string | null>>({});
 
   useEffect(() => {
     if (items.length === 0) {
@@ -45,6 +47,24 @@ function CheckoutPage() {
     estimateOrder({ items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })) })
       .then(setEstimate)
       .catch(() => setEstimate(null));
+  }, [items]);
+
+  useEffect(() => {
+    const targets = items.filter((item) => !(item.productId in imageMap));
+    if (targets.length === 0) return;
+    Promise.all(
+      targets.map(async (item) => {
+        try {
+          const product = await getProduct(item.productId);
+          return [item.productId, product.images?.[0] ?? null] as const;
+        } catch {
+          return [item.productId, null] as const;
+        }
+      }),
+    ).then((entries) => {
+      setImageMap((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
 
   const selectedAddress = addresses.find((a) => a.addressId === addressId) ?? null;
@@ -174,7 +194,17 @@ function CheckoutPage() {
                     key={item.productId}
                     className="flex min-h-15 items-center gap-2.75 border border-gray-200 bg-white px-5 py-3"
                   >
-                    <div className="size-15 shrink-0 bg-gray-200" />
+                    {imageMap[item.productId] ? (
+                      <img
+                        src={imageMap[item.productId] ?? undefined}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        className="size-15 shrink-0 bg-gray-200 object-cover"
+                      />
+                    ) : (
+                      <div className="size-15 shrink-0 bg-gray-200" />
+                    )}
                     <div className="flex flex-1 flex-col items-end gap-1.25">
                       <p className="line-clamp-1 w-full text-right text-[12px] font-medium text-black">
                         {item.productName}

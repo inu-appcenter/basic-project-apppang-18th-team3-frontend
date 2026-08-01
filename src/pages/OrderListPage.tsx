@@ -9,17 +9,18 @@ import Toast from '@/components/Toast';
 import { useCheckoutStore } from '@/store/checkoutStore';
 import type { OrderItemInfo, OrderSummaryResponse } from '@/types/mypage';
 
-type OrderStatus = '배송완료' | '배송중' | '주문접수';
+type OrderStatus = '배송완료' | '배송중' | '주문접수' | '취소됨';
 
 const STATUS_COLOR: Record<OrderStatus, string> = {
   배송완료: 'text-black',
   배송중: 'text-primary-200',
   주문접수: 'text-yellow-300',
+  취소됨: 'text-gray-300',
 };
 
-// 백엔드 status 값이 이 세 한글 라벨과 정확히 일치하는지 확인되지 않아 매칭 실패 시 폴백 (MyPage와 동일 방침)
+// 백엔드 status 값이 이 라벨들과 정확히 일치하는지 확인되지 않아 매칭 실패 시 폴백 (MyPage와 동일 방침)
 function toStatus(status: string): OrderStatus {
-  const known: OrderStatus[] = ['배송완료', '배송중', '주문접수'];
+  const known: OrderStatus[] = ['배송완료', '배송중', '주문접수', '취소됨'];
   return (known as string[]).includes(status) ? (status as OrderStatus) : '주문접수';
 }
 

@@ -11,7 +11,7 @@ import { useAuthStore } from '@/store/authStore';
 import type { OrderSummaryResponse, UserMeResponse } from '@/types/mypage';
 
 // ─── Types ────────────────────────────────────────────────
-type OrderStatus = '배송완료' | '배송중' | '주문접수';
+type OrderStatus = '배송완료' | '배송중' | '주문접수' | '취소됨';
 
 type Order = {
   id: number;
@@ -19,10 +19,10 @@ type Order = {
   imageUrl: string | null;
 };
 
-// 백엔드 주문 status 값이 이 세 한글 라벨과 정확히 일치하는지 확인되지 않아
+// 백엔드 주문 status 값이 이 한글 라벨들과 정확히 일치하는지 확인되지 않아
 // 매칭 실패 시 "주문접수"로 폴백한다 (docs/api-integration-issues.md 참고).
 function toOrder(res: OrderSummaryResponse): Order {
-  const knownStatuses: OrderStatus[] = ['배송완료', '배송중', '주문접수'];
+  const knownStatuses: OrderStatus[] = ['배송완료', '배송중', '주문접수', '취소됨'];
   const status = (knownStatuses as string[]).includes(res.status)
     ? (res.status as OrderStatus)
     : '주문접수';
@@ -46,6 +46,7 @@ const STATUS_COLOR: Record<OrderStatus, string> = {
   배송완료: 'text-black',
   배송중: 'text-primary-200',
   주문접수: 'text-yellow-300',
+  취소됨: 'text-gray-300',
 };
 
 // ─── Utils ────────────────────────────────────────────────
